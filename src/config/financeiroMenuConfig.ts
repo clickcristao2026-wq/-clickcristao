@@ -1,0 +1,31 @@
+import {
+  Receipt,
+  Star,
+  Ticket,
+  AlertTriangle,
+  RefreshCcw,
+  Users,
+  Wallet,
+  TrendingUp,
+  CreditCard,
+  Heart,
+  FileText,
+  Bell,
+  MessageSquare,
+} from "lucide-react";
+
+export const financeiroMenuItems = [
+  { title: "Transação", icon: Receipt, path: "/financeiro/transacao" },
+  { title: "Destaques", icon: Star, path: "/financeiro/destaques" },
+  { title: "Rifas", icon: Ticket, path: "/financeiro/rifas" },
+  { title: "Multas", icon: AlertTriangle, path: "/financeiro/multas" },
+  { title: "Reembolso", icon: RefreshCcw, path: "/financeiro/reembolso" },
+  { title: "Comissões", icon: Users, path: "/financeiro/comissoes" },
+  { title: "Custos", icon: Wallet, path: "/financeiro/custos" },
+  { title: "Faturamento", icon: TrendingUp, path: "/financeiro/faturamento" },
+  { title: "Crédito", icon: CreditCard, path: "/financeiro/credito" },
+  { title: "Doação", icon: Heart, path: "/financeiro/doacao" },
+  { title: "Notas", icon: FileText, path: "/financeiro/notas" },
+  { title: "Notificações", icon: Bell, path: "/financeiro/notificacoes" },
+  { title: "Avisos", icon: MessageSquare, path: "/financeiro/avisos" },
+];
