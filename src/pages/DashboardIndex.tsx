@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { 
-  Users, ShoppingBag, Store, Megaphone, UserCheck, Shield, 
-  Truck, DollarSign, Handshake, BarChart3, UserCog, Layout
+import {
+  Users, Shield, Truck, DollarSign, Handshake, BarChart3,
 } from "lucide-react";
 
 const dashboards = [
@@ -113,103 +112,6 @@ const dashboards = [
       { name: "Faturamento", path: "/gerenciamento/faturamento" },
     ],
   },
-  {
-    title: "Usuário Consumidor – Minha Conta",
-    description: "Área pessoal do Consumidor: dados, cartões, segurança, financeiro, compras, histórico, benefícios e configurações.",
-    icon: ShoppingBag,
-    color: "bg-slate-700",
-    link: "/account/dados",
-    pages: [
-      { name: "Meus Dados", path: "/account/dados" },
-      { name: "Meus Cartões", path: "/account/cartoes" },
-      { name: "Segurança", path: "/account/seguranca" },
-      { name: "Financeiro", path: "/account/financeiro" },
-      { name: "Benefícios", path: "/account/beneficios" },
-      { name: "Mercadoria", path: "/account/mercadoria" },
-      { name: "Notificação", path: "/account/notificacao" },
-      { name: "Histórico", path: "/account/historico" },
-      { name: "Avaliação", path: "/account/avaliacao" },
-      { name: "Endereço", path: "/account/endereco" },
-      { name: "Compras", path: "/account/compras" },
-      { name: "Contas", path: "/account/contas" },
-      { name: "Avisos", path: "/account/avisos" },
-      { name: "Configuração", path: "/account/configuracao" },
-      { name: "Excluir Conta", path: "/account/excluir-conta" },
-    ],
-  },
-  {
-    title: "Usuário Vendedor – Minha Conta",
-    description: "Área pessoal do Vendedor: dados, financeiro, faturamento, mercadoria, produtos, benefícios e gestão de vendas.",
-    icon: Store,
-    color: "bg-emerald-700",
-    link: "/account/dados",
-    pages: [
-      { name: "Meus Dados", path: "/account/dados" },
-      { name: "Segurança", path: "/account/seguranca" },
-      { name: "Financeiro Vendedor", path: "/account/financeiro-vendedor" },
-      { name: "Faturamento", path: "/account/faturamento" },
-      { name: "Mercadoria Vendedor", path: "/account/mercadoria-vendedor" },
-      { name: "Benefícios Vendedor", path: "/account/beneficios-vendedor" },
-      { name: "Produtos", path: "/account/produtos" },
-      { name: "Endereço", path: "/account/endereco" },
-      { name: "Contas", path: "/account/contas" },
-      { name: "Notificação", path: "/account/notificacao" },
-      { name: "Avisos", path: "/account/avisos" },
-      { name: "Configuração", path: "/account/configuracao" },
-      { name: "Excluir Conta", path: "/account/excluir-conta" },
-    ],
-  },
-  {
-    title: "Usuário Anunciante – Minha Conta",
-    description: "Área pessoal do Anunciante: dados, mercadoria, benefícios, faturamento e gestão de anúncios.",
-    icon: Megaphone,
-    color: "bg-amber-600",
-    link: "/account/dados",
-    pages: [
-      { name: "Meus Dados", path: "/account/dados" },
-      { name: "Segurança", path: "/account/seguranca" },
-      { name: "Financeiro", path: "/account/financeiro" },
-      { name: "Faturamento", path: "/account/faturamento" },
-      { name: "Mercadoria Anunciante", path: "/account/mercadoria-anunciante" },
-      { name: "Benefícios Anunciante", path: "/account/beneficios-anunciante" },
-      { name: "Produtos", path: "/account/produtos" },
-      { name: "Endereço", path: "/account/endereco" },
-      { name: "Contas", path: "/account/contas" },
-      { name: "Notificação", path: "/account/notificacao" },
-      { name: "Avisos", path: "/account/avisos" },
-      { name: "Configuração", path: "/account/configuracao" },
-      { name: "Excluir Conta", path: "/account/excluir-conta" },
-    ],
-  },
-  {
-    title: "Usuário Afiliado – Minha Conta",
-    description: "Área pessoal do Afiliado: dados, financeiro, comissões, histórico e benefícios.",
-    icon: Handshake,
-    color: "bg-indigo-700",
-    link: "/account/dados",
-    pages: [
-      { name: "Meus Dados", path: "/account/dados" },
-      { name: "Segurança", path: "/account/seguranca" },
-      { name: "Financeiro", path: "/account/financeiro" },
-      { name: "Benefícios", path: "/account/beneficios" },
-      { name: "Histórico", path: "/account/historico" },
-      { name: "Avaliação", path: "/account/avaliacao" },
-      { name: "Endereço", path: "/account/endereco" },
-      { name: "Contas", path: "/account/contas" },
-      { name: "Notificação", path: "/account/notificacao" },
-      { name: "Avisos", path: "/account/avisos" },
-      { name: "Configuração", path: "/account/configuracao" },
-      { name: "Excluir Conta", path: "/account/excluir-conta" },
-    ],
-  },
-  {
-    title: "Cadastro",
-    description: "Tela de cadastro e login para usuários e cooperadores da plataforma.",
-    icon: Layout,
-    color: "bg-rose-600",
-    link: "/cadastro",
-    pages: [{ name: "Cadastro / Login", path: "/cadastro" }],
-  },
 ];
 
 export default function DashboardIndex() {
@@ -217,8 +119,10 @@ export default function DashboardIndex() {
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900">Central de Dashboards – Click Cristão</h1>
-          <p className="text-gray-500 mt-2">Acesso rápido a todas as áreas do sistema. Clique em qualquer página para acessá-la diretamente.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Central de Painéis – Administrador</h1>
+          <p className="text-gray-500 mt-2">
+            Como administrador, você tem acesso a todos os painéis internos da plataforma. Escolha um abaixo.
+          </p>
         </div>
 
         <div className="grid gap-6">
@@ -254,7 +158,7 @@ export default function DashboardIndex() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-10">Página provisória para validação interna</p>
+        <p className="text-center text-xs text-gray-400 mt-10">Área restrita à conta Administrador</p>
       </div>
     </div>
   );

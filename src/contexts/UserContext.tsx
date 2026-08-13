@@ -1,52 +1,18 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+// Compatibilidade: o estado de usuário/conta agora vem da sessão autenticada
+// (AuthContext), não mais de uma seleção manual. Este hook é mantido para não
+// exigir alterações nos componentes que já consomem `useUser()`.
+import { useAuth } from "@/contexts/AuthContext";
+import { ROLE_LABELS, TipoConta, TipoUsuario } from "@/types/auth";
 
-export type TipoUsuario = "consumidor" | "vendedor" | "anunciante" | "afiliado";
-export type TipoConta = "conta_unica" | "conta_vinculada" | "conta_compartilhada";
-
-interface UserContextType {
-  tipoUsuario: TipoUsuario;
-  tipoConta: TipoConta;
-  setTipoUsuario: (tipo: TipoUsuario) => void;
-  setTipoConta: (tipo: TipoConta) => void;
-  getUserLabel: () => string;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-export function UserProvider({ children }: { children: ReactNode }) {
-  // Default para consumidor conta única (para testes, depois virá do cadastro/auth)
-  const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario>("consumidor");
-  const [tipoConta, setTipoConta] = useState<TipoConta>("conta_unica");
-
-  const getUserLabel = () => {
-    const labels: Record<TipoUsuario, string> = {
-      consumidor: "Consumidor",
-      vendedor: "Vendedor",
-      anunciante: "Anunciante",
-      afiliado: "Afiliado",
-    };
-    return labels[tipoUsuario];
-  };
-
-  return (
-    <UserContext.Provider
-      value={{
-        tipoUsuario,
-        tipoConta,
-        setTipoUsuario,
-        setTipoConta,
-        getUserLabel,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
-  );
-}
+export type { TipoUsuario, TipoConta } from "@/types/auth";
 
 export function useUser() {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
+  const { user } = useAuth();
+
+  const tipoUsuario: TipoUsuario = (user?.role as TipoUsuario) ?? "consumidor";
+  const tipoConta: TipoConta = user?.tipoConta ?? "conta_unica";
+
+  const getUserLabel = () => ROLE_LABELS[tipoUsuario];
+
+  return { tipoUsuario, tipoConta, getUserLabel };
 }

@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ADMIN_ROLE } from "@/types/auth";
 
 interface CooperadorForm {
   nomeCompleto: string;
@@ -50,13 +52,14 @@ const initialForm: CooperadorForm = {
 export default function CadastroCooperador() {
   const [form, setForm] = useState<CooperadorForm>(initialForm);
   const { toast } = useToast();
+  const { createManagedAccount } = useAuth();
 
   const update = (field: keyof CooperadorForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    if (!form.nomeCompleto || !form.cpf || !form.email || !form.nomeUsuario || !form.senha) {
+  const handleSubmit = async () => {
+    if (!form.nomeCompleto || !form.cpf || !form.email || !form.setor || !form.nomeUsuario || !form.senha) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
@@ -64,8 +67,28 @@ export default function CadastroCooperador() {
       toast({ title: "Erro", description: "As senhas não coincidem.", variant: "destructive" });
       return;
     }
-    console.log("Cadastro cooperador:", form);
-    toast({ title: "Sucesso", description: "Cooperador cadastrado com sucesso!" });
+
+    // Todo cooperador cadastrado aqui vira uma conta "admin", com acesso a
+    // todos os painéis internos. O setor selecionado é só informação
+    // funcional/organizacional do cooperador, não define permissão de acesso.
+    const result = await createManagedAccount({
+      nomeCompleto: form.nomeCompleto,
+      email: form.email,
+      nomeUsuario: form.nomeUsuario,
+      senha: form.senha,
+      role: ADMIN_ROLE,
+      tipoConta: "conta_unica",
+    });
+
+    if (!result.ok) {
+      toast({ title: "Erro ao cadastrar", description: result.error, variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: "Sucesso",
+      description: `Cooperador cadastrado com o usuário "${form.nomeUsuario}". Se a confirmação de e-mail estiver ativada no Supabase, ele só conseguirá entrar depois de confirmar o e-mail.`,
+    });
     setForm(initialForm);
   };
 

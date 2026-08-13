@@ -5,17 +5,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { ROLE_HOME_ROUTE } from "@/types/auth";
 
 import consumidorIcon from "@/assets/icons/consumidor.png";
 import vendedorIcon from "@/assets/icons/vendedor.png";
 import anuncianteIcon from "@/assets/icons/anunciante.png";
 import afiliadoIcon from "@/assets/icons/afiliado.png";
-import rhIcon from "@/assets/icons/rh.png";
 import admIcon from "@/assets/icons/adm.png";
-import logisticaIcon from "@/assets/icons/logistica.png";
-import financeiroIcon from "@/assets/icons/financeiro.png";
-import comissionadoIcon from "@/assets/icons/comissionado.png";
-import gerenciamentoIcon from "@/assets/icons/gerenciamento.png";
 import tipoUsuarioIcon from "@/assets/icons/tipo-usuario.png";
 import tipoCooperadorIcon from "@/assets/icons/tipo-cooperador.png";
 
@@ -52,48 +50,16 @@ const tiposUsuario = [
   },
 ];
 
+// Único tipo de conta interna: o Administrador tem acesso a todos os
+// painéis da plataforma (RH, ADM, Logística, Financeiro, Comissionado e
+// Gerenciamento) — não existem mais contas internas separadas por setor.
 const tiposCooperador = [
   {
-    id: "rh",
-    label: "RH – Recursos Humanos",
-    description: "Selecione esta conta para gerenciar informações relacionadas aos cooperadores e usuários da empresa, para organização de dados funcionais e gestão de pessoas.",
-    url: "/rh/cooperador",
-    icon: rhIcon,
-  },
-  {
-    id: "adm",
-    label: "ADM – Administração Geral",
-    description: "Selecione esta conta para gerenciar as configurações administrativas da plataforma, usuários, permissões de acesso e supervisão geral das operações.",
-    url: "/admin/cadastrados",
+    id: "admin",
+    label: "Administrador",
+    description: "Conta com acesso completo a todos os painéis internos da plataforma: RH, Administração Geral, Logística, Financeiro, Comissionado e Gerenciamento.",
+    url: "/dashboards",
     icon: admIcon,
-  },
-  {
-    id: "logistica",
-    label: "LOGÍSTICA – Operações e Processos",
-    description: "Selecione esta conta para acompanhar pedidos, organização de entregas, controle de operações logísticas e suporte operacional.",
-    url: "/logistica/pedidos",
-    icon: logisticaIcon,
-  },
-  {
-    id: "financeiro",
-    label: "FINANCEIRO – Gestão Financeira",
-    description: "Selecione esta conta para acessar faturamentos, pagamentos, relatórios financeiros e controle das movimentações da plataforma.",
-    url: "/financeiro/transacao",
-    icon: financeiroIcon,
-  },
-  {
-    id: "comissionado",
-    label: "COMISSIONADO – Gestão de Comissões",
-    description: "Selecione esta conta para acompanhar vendas realizadas, cálculo de comissões e relatórios de desempenho comercial.",
-    url: "/comissionado/cadastrados",
-    icon: comissionadoIcon,
-  },
-  {
-    id: "gerenciamento",
-    label: "GERENCIAMENTO – Supervisão Operacional",
-    description: "Selecione esta conta para supervisionar setores, acompanhar indicadores de desempenho e auxiliar na gestão estratégica da plataforma.",
-    url: "/gerenciamento/lojas",
-    icon: gerenciamentoIcon,
   },
 ];
 
@@ -113,20 +79,36 @@ Ao acessar o sistema, o cooperador declara estar ciente e de acordo com os Termo
 
 const StepTipoUsuario = ({ data, updateData, onNext }: Props) => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { toast } = useToast();
   const [leftTab, setLeftTab] = useState<"usuario" | "cooperador">("usuario");
   const [rightTab, setRightTab] = useState<"cadastro" | "login">("cadastro");
   const [infoTab, setInfoTab] = useState<"usuario" | "cooperador">("usuario");
   const [loginData, setLoginData] = useState({ email: "", login: "", senha: "" });
+  const [isEntering, setIsEntering] = useState(false);
 
   const isCooperadorSelected = tiposCooperador.some(t => t.id === data.tipoUsuario);
   const isUsuarioSelected = tiposUsuario.some(t => t.id === data.tipoUsuario);
   const canProceedCadastro = isUsuarioSelected && data.titular.email !== "";
-  
-  const handleEntrar = () => {
-    const selectedCooperador = tiposCooperador.find(t => t.id === data.tipoUsuario);
-    if (selectedCooperador) {
-      navigate(selectedCooperador.url);
+
+  const handleEntrar = async () => {
+    if (!isCooperadorSelected) return;
+    const identifier = loginData.login || loginData.email;
+
+    setIsEntering(true);
+    const result = await login(identifier, loginData.senha);
+    setIsEntering(false);
+
+    if (!result.ok || !result.user) {
+      toast({
+        title: "Não foi possível entrar",
+        description: result.error,
+        variant: "destructive",
+      });
+      return;
     }
+
+    navigate(ROLE_HOME_ROUTE[result.user.role]);
   };
 
   return (
@@ -422,13 +404,13 @@ const StepTipoUsuario = ({ data, updateData, onNext }: Props) => {
                 </Button>
                 <Button
                   onClick={handleEntrar}
-                  disabled={!isCooperadorSelected || !loginData.login || !loginData.senha}
+                  disabled={!isCooperadorSelected || (!loginData.login && !loginData.email) || !loginData.senha || isEntering}
                   className="flex-1 font-semibold text-white"
                   style={{ backgroundColor: '#2035F2' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0F22C7'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2035F2'}
                 >
-                  ENTRAR
+                  {isEntering ? "Entrando..." : "ENTRAR"}
                 </Button>
               </div>
 
@@ -499,13 +481,13 @@ const StepTipoUsuario = ({ data, updateData, onNext }: Props) => {
 
               <Button
                 onClick={handleEntrar}
-                disabled={!isCooperadorSelected || !loginData.login || !loginData.senha}
+                disabled={!isCooperadorSelected || (!loginData.login && !loginData.email) || !loginData.senha || isEntering}
                 className="w-full font-semibold text-white"
                 style={{ backgroundColor: '#2035F2' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0F22C7'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2035F2'}
               >
-                CADASTRE-SE
+                {isEntering ? "Entrando..." : "ENTRAR"}
               </Button>
             </div>
           )}

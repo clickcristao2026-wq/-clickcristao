@@ -4,8 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { UserProvider } from "@/contexts/UserContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthStatusBar } from "@/components/AuthStatusBar";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import DashboardIndex from "./pages/DashboardIndex";
 import NotFound from "./pages/NotFound";
 import Cadastro from "./pages/Cadastro";
@@ -103,157 +106,180 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <UserProvider>
+      <AuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AuthStatusBar />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/dashboards" element={<DashboardIndex />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboards"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <DashboardIndex />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route
               path="/account/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/dados" element={<MeusDados />} />
-                    <Route path="/cartoes" element={<MeusCartoes />} />
-                    <Route path="/seguranca" element={<Seguranca />} />
-                    <Route path="/financeiro" element={<Financeiro />} />
-                    <Route path="/financeiro-vendedor" element={<FinanceiroVendedor />} />
-                    <Route path="/faturamento" element={<Faturamento />} />
-                    <Route path="/endereco" element={<Endereco />} />
-                    <Route path="/compras" element={<Compras />} />
-                    <Route path="/contas" element={<Contas />} />
-                    <Route path="/avisos" element={<Avisos />} />
-                    <Route path="/beneficios" element={<Beneficios />} />
-                    <Route path="/beneficios-vendedor" element={<BeneficiosVendedor />} />
-                    <Route path="/beneficios-anunciante" element={<BeneficiosAnunciante />} />
-                    <Route path="/mercadoria" element={<Mercadoria />} />
-                    <Route path="/mercadoria-vendedor" element={<MercadoriaVendedor />} />
-                    <Route path="/mercadoria-anunciante" element={<MercadoriaAnunciante />} />
-                    <Route path="/produtos" element={<Produtos />} />
-                    <Route path="/notificacao" element={<Notificacao />} />
-                    <Route path="/configuracao" element={<Configuracao />} />
-                    <Route path="/excluir-conta" element={<ExcluirConta />} />
-                    <Route path="/historico" element={<Historico />} />
-                    <Route path="/avaliacao" element={<Avaliacao />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["consumidor", "vendedor", "anunciante", "afiliado"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/dados" element={<MeusDados />} />
+                      <Route path="/cartoes" element={<MeusCartoes />} />
+                      <Route path="/seguranca" element={<Seguranca />} />
+                      <Route path="/financeiro" element={<Financeiro />} />
+                      <Route path="/financeiro-vendedor" element={<FinanceiroVendedor />} />
+                      <Route path="/faturamento" element={<Faturamento />} />
+                      <Route path="/endereco" element={<Endereco />} />
+                      <Route path="/compras" element={<Compras />} />
+                      <Route path="/contas" element={<Contas />} />
+                      <Route path="/avisos" element={<Avisos />} />
+                      <Route path="/beneficios" element={<Beneficios />} />
+                      <Route path="/beneficios-vendedor" element={<BeneficiosVendedor />} />
+                      <Route path="/beneficios-anunciante" element={<BeneficiosAnunciante />} />
+                      <Route path="/mercadoria" element={<Mercadoria />} />
+                      <Route path="/mercadoria-vendedor" element={<MercadoriaVendedor />} />
+                      <Route path="/mercadoria-anunciante" element={<MercadoriaAnunciante />} />
+                      <Route path="/produtos" element={<Produtos />} />
+                      <Route path="/notificacao" element={<Notificacao />} />
+                      <Route path="/configuracao" element={<Configuracao />} />
+                      <Route path="/excluir-conta" element={<ExcluirConta />} />
+                      <Route path="/historico" element={<Historico />} />
+                      <Route path="/avaliacao" element={<Avaliacao />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/admin/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/cadastrados" element={<AdminCadastrados />} />
-                    <Route path="/registrados" element={<AdminRegistrados />} />
-                    <Route path="/produtos" element={<AdminProdutos />} />
-                    <Route path="/anuncios" element={<AdminAnuncios />} />
-                    <Route path="/minha-loja" element={<AdminMinhaLoja />} />
-                    <Route path="/vendidos" element={<AdminVendidos />} />
-                    <Route path="/entregados" element={<AdminEntregados />} />
-                    <Route path="/mercadorias" element={<AdminMercadorias />} />
-                    <Route path="/penalidades" element={<AdminPenalidades />} />
-                    <Route path="/campanhas" element={<AdminCampanhas />} />
-                    <Route path="/destaques" element={<AdminDestaques />} />
-                    <Route path="/novidades" element={<AdminNovidades />} />
-                    <Route path="/contatos" element={<AdminContatos />} />
-                    <Route path="/notificacoes" element={<AdminNotificacoes />} />
-                    <Route path="/avisos" element={<AdminAvisos />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/cadastrados" element={<AdminCadastrados />} />
+                      <Route path="/registrados" element={<AdminRegistrados />} />
+                      <Route path="/produtos" element={<AdminProdutos />} />
+                      <Route path="/anuncios" element={<AdminAnuncios />} />
+                      <Route path="/minha-loja" element={<AdminMinhaLoja />} />
+                      <Route path="/vendidos" element={<AdminVendidos />} />
+                      <Route path="/entregados" element={<AdminEntregados />} />
+                      <Route path="/mercadorias" element={<AdminMercadorias />} />
+                      <Route path="/penalidades" element={<AdminPenalidades />} />
+                      <Route path="/campanhas" element={<AdminCampanhas />} />
+                      <Route path="/destaques" element={<AdminDestaques />} />
+                      <Route path="/novidades" element={<AdminNovidades />} />
+                      <Route path="/contatos" element={<AdminContatos />} />
+                      <Route path="/notificacoes" element={<AdminNotificacoes />} />
+                      <Route path="/avisos" element={<AdminAvisos />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/logistica/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/pedidos" element={<LogisticaPedidos />} />
-                    <Route path="/solicitados" element={<LogisticaSolicitados />} />
-                    <Route path="/entregas" element={<LogisticaEntregas />} />
-                    <Route path="/temporizador" element={<LogisticaTemporizador />} />
-                    <Route path="/transportes" element={<LogisticaTransportes />} />
-                    <Route path="/notificacoes" element={<LogisticaNotificacoes />} />
-                    <Route path="/avisos" element={<LogisticaAvisos />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/pedidos" element={<LogisticaPedidos />} />
+                      <Route path="/solicitados" element={<LogisticaSolicitados />} />
+                      <Route path="/entregas" element={<LogisticaEntregas />} />
+                      <Route path="/temporizador" element={<LogisticaTemporizador />} />
+                      <Route path="/transportes" element={<LogisticaTransportes />} />
+                      <Route path="/notificacoes" element={<LogisticaNotificacoes />} />
+                      <Route path="/avisos" element={<LogisticaAvisos />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/financeiro/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/transacao" element={<FinanceiroTransacao />} />
-                    <Route path="/destaques" element={<FinanceiroDestaques />} />
-                    <Route path="/rifas" element={<FinanceiroRifas />} />
-                    <Route path="/multas" element={<FinanceiroMultas />} />
-                    <Route path="/reembolso" element={<FinanceiroReembolso />} />
-                    <Route path="/comissoes" element={<FinanceiroComissoes />} />
-                    <Route path="/custos" element={<FinanceiroCustos />} />
-                    <Route path="/faturamento" element={<FinanceiroFaturamento />} />
-                    <Route path="/credito" element={<FinanceiroCredito />} />
-                    <Route path="/doacao" element={<FinanceiroDoacao />} />
-                    <Route path="/notas" element={<FinanceiroNotas />} />
-                    <Route path="/notificacoes" element={<FinanceiroNotificacoes />} />
-                    <Route path="/avisos" element={<FinanceiroAvisos />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/transacao" element={<FinanceiroTransacao />} />
+                      <Route path="/destaques" element={<FinanceiroDestaques />} />
+                      <Route path="/rifas" element={<FinanceiroRifas />} />
+                      <Route path="/multas" element={<FinanceiroMultas />} />
+                      <Route path="/reembolso" element={<FinanceiroReembolso />} />
+                      <Route path="/comissoes" element={<FinanceiroComissoes />} />
+                      <Route path="/custos" element={<FinanceiroCustos />} />
+                      <Route path="/faturamento" element={<FinanceiroFaturamento />} />
+                      <Route path="/credito" element={<FinanceiroCredito />} />
+                      <Route path="/doacao" element={<FinanceiroDoacao />} />
+                      <Route path="/notas" element={<FinanceiroNotas />} />
+                      <Route path="/notificacoes" element={<FinanceiroNotificacoes />} />
+                      <Route path="/avisos" element={<FinanceiroAvisos />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/comissionado/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/cadastrados" element={<ComissionadoCadastrados />} />
-                    <Route path="/financeiro" element={<ComissionadoFinanceiro />} />
-                    <Route path="/comissao" element={<ComissionadoComissao />} />
-                    <Route path="/notificacoes" element={<ComissionadoNotificacoes />} />
-                    <Route path="/avisos" element={<ComissionadoAvisos />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/cadastrados" element={<ComissionadoCadastrados />} />
+                      <Route path="/financeiro" element={<ComissionadoFinanceiro />} />
+                      <Route path="/comissao" element={<ComissionadoComissao />} />
+                      <Route path="/notificacoes" element={<ComissionadoNotificacoes />} />
+                      <Route path="/avisos" element={<ComissionadoAvisos />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/gerenciamento/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/lojas" element={<GerenciamentoLojas />} />
-                    <Route path="/produtos" element={<GerenciamentoProdutos />} />
-                    <Route path="/anuncios" element={<GerenciamentoAnuncios />} />
-                    <Route path="/financeiro" element={<GerenciamentoFinanceiro />} />
-                    <Route path="/faturamento" element={<GerenciamentoFaturamento />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/lojas" element={<GerenciamentoLojas />} />
+                      <Route path="/produtos" element={<GerenciamentoProdutos />} />
+                      <Route path="/anuncios" element={<GerenciamentoAnuncios />} />
+                      <Route path="/financeiro" element={<GerenciamentoFinanceiro />} />
+                      <Route path="/faturamento" element={<GerenciamentoFaturamento />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/rh/*"
               element={
-                <SidebarProvider>
-                  <Routes>
-                    <Route path="/cooperador" element={<RhCooperador />} />
-                    <Route path="/cadastro-cooperador" element={<RhCadastroCooperador />} />
-                    <Route path="/consumidor" element={<RhConsumidor />} />
-                    <Route path="/vendedor" element={<RhVendedor />} />
-                    <Route path="/anunciante" element={<RhAnunciante />} />
-                    <Route path="/afiliado" element={<RhAfiliado />} />
-                    <Route path="/sistema" element={<RhSistema />} />
-                    <Route path="/usuarios" element={<RhUsuarios />} />
-                    <Route path="/funcionarios" element={<RhFuncionarios />} />
-                  </Routes>
-                </SidebarProvider>
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SidebarProvider>
+                    <Routes>
+                      <Route path="/cooperador" element={<RhCooperador />} />
+                      <Route path="/cadastro-cooperador" element={<RhCadastroCooperador />} />
+                      <Route path="/consumidor" element={<RhConsumidor />} />
+                      <Route path="/vendedor" element={<RhVendedor />} />
+                      <Route path="/anunciante" element={<RhAnunciante />} />
+                      <Route path="/afiliado" element={<RhAfiliado />} />
+                      <Route path="/sistema" element={<RhSistema />} />
+                      <Route path="/usuarios" element={<RhUsuarios />} />
+                      <Route path="/funcionarios" element={<RhFuncionarios />} />
+                    </Routes>
+                  </SidebarProvider>
+                </ProtectedRoute>
               }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </UserProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

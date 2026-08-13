@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { Settings } from "lucide-react";
 import {
@@ -12,10 +13,18 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { getAdminMenu } from "@/config/adminMenuConfig";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AdminSidebar() {
   const { open } = useSidebar();
   const menuSections = getAdminMenu();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <Sidebar className={open ? "w-64" : "w-20"} collapsible="icon">
@@ -53,16 +62,26 @@ export function AdminSidebar() {
               <SidebarMenu>
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
+                    {item.title === "Sair" ? (
+                      <SidebarMenuButton
+                        onClick={handleLogout}
                         className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-lg"
-                        activeClassName="bg-primary/10 text-primary font-medium"
                       >
                         <item.icon className="h-5 w-5 flex-shrink-0" />
                         {open && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-lg"
+                          activeClassName="bg-primary/10 text-primary font-medium"
+                        >
+                          <item.icon className="h-5 w-5 flex-shrink-0" />
+                          {open && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

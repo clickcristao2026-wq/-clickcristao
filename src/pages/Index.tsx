@@ -1,31 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useUser, TipoUsuario, TipoConta } from "@/contexts/UserContext";
 import { ShoppingCart, Store, Megaphone, Users } from "lucide-react";
+
+const tiposUsuario = [
+  { label: "Consumidor", description: "Compre produtos e serviços com facilidade.", icon: ShoppingCart, color: "#10B981" },
+  { label: "Vendedor", description: "Comercialize produtos e impulsione suas vendas.", icon: Store, color: "#2035F2" },
+  { label: "Anunciante", description: "Divulgue seus bens e serviços para mais pessoas.", icon: Megaphone, color: "#8B5CF6" },
+  { label: "Afiliado", description: "Revenda produtos e lucre a cada venda.", icon: Users, color: "#F59E0B" },
+];
 
 const Index = () => {
   const navigate = useNavigate();
-  const { setTipoUsuario, setTipoConta } = useUser();
-
-  const tiposUsuario: { tipo: TipoUsuario; label: string; icon: React.ElementType; color: string }[] = [
-    { tipo: "consumidor", label: "Consumidor", icon: ShoppingCart, color: "#10B981" },
-    { tipo: "vendedor", label: "Vendedor", icon: Store, color: "#2035F2" },
-    { tipo: "anunciante", label: "Anunciante", icon: Megaphone, color: "#8B5CF6" },
-    { tipo: "afiliado", label: "Afiliado", icon: Users, color: "#F59E0B" },
-  ];
-
-  const tiposConta: { tipo: TipoConta; label: string }[] = [
-    { tipo: "conta_unica", label: "Conta Única" },
-    { tipo: "conta_vinculada", label: "Conta Vinculada" },
-    { tipo: "conta_compartilhada", label: "Conta Compartilhada" },
-  ];
-
-  const handleAccessDashboard = (tipoUsuario: TipoUsuario, tipoConta: TipoConta) => {
-    setTipoUsuario(tipoUsuario);
-    setTipoConta(tipoConta);
-    navigate("/account/dados");
-  };
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -33,51 +19,32 @@ const Index = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">Click Cristão</h1>
           <p className="text-muted-foreground text-lg">
-            Selecione o tipo de usuário e conta para acessar a dashboard
+            A plataforma para comprar, vender, anunciar e revender com propósito.
           </p>
+          <div className="flex justify-center gap-4 mt-8">
+            <Button size="lg" onClick={() => navigate("/login")} style={{ backgroundColor: "#2035F2" }} className="text-white">
+              Entrar
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate("/cadastro")}>
+              Criar Nova Conta
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-8">
-          {tiposUsuario.map((usuario) => (
-            <Card key={usuario.tipo} className="overflow-hidden">
-              <CardHeader 
-                className="text-white py-4"
-                style={{ backgroundColor: usuario.color }}
-              >
+        <div className="grid gap-6 md:grid-cols-2">
+          {tiposUsuario.map((tipo) => (
+            <Card key={tipo.label} className="overflow-hidden">
+              <CardHeader className="text-white py-4" style={{ backgroundColor: tipo.color }}>
                 <CardTitle className="flex items-center gap-3">
-                  <usuario.icon className="h-6 w-6" />
-                  Dashboard {usuario.label}
+                  <tipo.icon className="h-6 w-6" />
+                  {tipo.label}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {tiposConta.map((conta) => (
-                    <Button
-                      key={conta.tipo}
-                      variant="outline"
-                      className="h-auto py-4 flex flex-col gap-2"
-                      onClick={() => handleAccessDashboard(usuario.tipo, conta.tipo)}
-                    >
-                      <span className="font-semibold">{conta.label}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Acessar como {usuario.label.toLowerCase()}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-muted-foreground text-sm">{tipo.description}</p>
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <Button 
-            size="lg"
-            onClick={() => navigate("/cadastro")}
-            style={{ backgroundColor: '#2035F2' }}
-          >
-            Criar Nova Conta
-          </Button>
         </div>
       </div>
     </div>

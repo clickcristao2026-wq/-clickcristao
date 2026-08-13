@@ -7,6 +7,9 @@ import StepTipoConta from "@/components/cadastro/StepTipoConta";
 import StepFormulario from "@/components/cadastro/StepFormulario";
 import { DadosAnunciante, initialAnunciante } from "@/components/cadastro/AnuncianteFormSections";
 import { DadosAfiliado, initialAfiliado } from "@/components/cadastro/AfiliadoFormSections";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { ROLE_HOME_ROUTE, TipoConta, UserRole } from "@/types/auth";
 
 // Dados do Titular / Pessoa Física
 export interface DadosTitular {
@@ -317,6 +320,8 @@ const Cadastro = () => {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<CadastroData>(initialData);
   const navigate = useNavigate();
+  const { register } = useAuth();
+  const { toast } = useToast();
 
   const updateData = (updates: Partial<CadastroData>) => {
     setData((prev) => ({ ...prev, ...updates }));
@@ -325,9 +330,48 @@ const Cadastro = () => {
   const nextStep = () => setStep((prev) => prev + 1);
   const prevStep = () => setStep((prev) => prev - 1);
 
-  const handleSubmit = () => {
-    console.log("Cadastro data:", data);
-    navigate("/account/dados");
+  const handleSubmit = async () => {
+    const isPessoaJuridica = data.naturezaConta === "pessoa_juridica";
+
+    const nomeCompleto = isPessoaJuridica
+      ? data.instituicao.nomeFantasia || data.instituicao.razaoSocial
+      : data.titular.nomeCompleto;
+    const email = isPessoaJuridica ? data.contatoInstitucional.email : data.titular.email;
+
+    const result = await register({
+      nomeCompleto,
+      email,
+      nomeUsuario: data.acesso.nomeUsuario,
+      senha: data.acesso.senha,
+      role: data.tipoUsuario as UserRole,
+      tipoConta: data.tipoConta as TipoConta,
+    });
+
+    if (!result.ok) {
+      toast({
+        title: "Não foi possível criar sua conta",
+        description: result.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (result.needsEmailConfirmation) {
+      toast({
+        title: "Quase lá!",
+        description: "Enviamos um link de confirmação para o seu e-mail. Confirme para poder entrar.",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!result.user) {
+      navigate("/login");
+      return;
+    }
+
+    toast({ title: "Conta criada com sucesso!", description: "Bem-vindo ao Click Cristão." });
+    navigate(ROLE_HOME_ROUTE[result.user.role]);
   };
 
   return (
