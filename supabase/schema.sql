@@ -76,7 +76,10 @@ create policy "profiles_update_admin_any" on public.profiles
 -- =========================================================================
 -- Mesmo com a policy "profiles_update_own", esta trigger garante que só um
 -- admin já autenticado consegue alterar a coluna "role" de alguém (inclusive
--- a própria). Isso fecha o buraco de um usuário comum se autopromover.
+-- a própria). Isso fecha o buraco de um usuário comum se autopromover pelo
+-- app. Quando auth.uid() é NULL (SQL rodado direto no SQL Editor/service
+-- role, sem passar pela API autenticada), a alteração é permitida — esse
+-- acesso já exige login no painel do Supabase, então é um contexto confiável.
 create or replace function public.protect_role_column()
 returns trigger
 language plpgsql
@@ -84,7 +87,9 @@ security definer
 set search_path = public
 as $$
 begin
-  if NEW.role is distinct from OLD.role and not public.is_admin(auth.uid()) then
+  if NEW.role is distinct from OLD.role
+     and auth.uid() is not null
+     and not public.is_admin(auth.uid()) then
     NEW.role := OLD.role;
   end if;
   return NEW;

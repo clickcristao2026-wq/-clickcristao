@@ -1,67 +1,124 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AccountLayout } from "@/components/AccountLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Pause, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pause, Play, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchMyProducts, updateProductStatus } from "@/lib/products";
+import { Product, ProductStatus } from "@/types/product";
+import { useToast } from "@/hooks/use-toast";
+
+const statusLabel: Record<ProductStatus, string> = {
+  rascunho: "Rascunho",
+  publicado: "Publicado",
+  pausado: "Pausado",
+  removido: "Removido",
+};
+
+const statusColor: Record<ProductStatus, string> = {
+  rascunho: "bg-gray-100 text-gray-800",
+  publicado: "bg-green-100 text-green-800",
+  pausado: "bg-amber-100 text-amber-800",
+  removido: "bg-red-100 text-red-800",
+};
 
 const Produtos = () => {
-  const acoes = [
-    { 
-      title: "Adicionar Publicação", 
-      description: "Cadastre um novo produto para venda",
-      icon: Plus, 
-      color: "#10B981",
-      buttonStyle: { backgroundColor: "#10B981", color: "white" }
-    },
-    { 
-      title: "Remover Publicação", 
-      description: "Exclua o produto do anunciado.",
-      icon: Trash2, 
-      color: "#EF4444",
-      buttonStyle: { backgroundColor: "#EF4444", color: "white" }
-    },
-    { 
-      title: "Pausar Publicação", 
-      description: "Suspender temporariamente o anúncio.",
-      icon: Pause, 
-      color: "#F59E0B",
-      buttonStyle: { backgroundColor: "#F59E0B", color: "white" }
-    },
-    { 
-      title: "Gerenciar Publicação", 
-      description: "Edite informações dos seus produtos",
-      icon: Settings, 
-      color: "#2035F2",
-      buttonStyle: { backgroundColor: "#2035F2", color: "white" }
-    },
-  ];
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [produtos, setProdutos] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const carregar = async () => {
+    if (!user) return;
+    setLoading(true);
+    setProdutos(await fetchMyProducts(user.id));
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const alternarStatus = async (produto: Product) => {
+    const novoStatus: ProductStatus = produto.status === "pausado" ? "publicado" : "pausado";
+    const result = await updateProductStatus(produto.id, novoStatus);
+    if (!result.ok) {
+      toast({ title: "Erro", description: result.error, variant: "destructive" });
+      return;
+    }
+    carregar();
+  };
+
+  const remover = async (produto: Product) => {
+    const result = await updateProductStatus(produto.id, "removido");
+    if (!result.ok) {
+      toast({ title: "Erro", description: result.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Produto removido" });
+    carregar();
+  };
+
+  const produtosVisiveis = produtos.filter((p) => p.status !== "removido");
 
   return (
     <AccountLayout title="Produtos">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {acoes.map((acao) => (
-          <Card key={acao.title} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div 
-                  className="p-3 rounded-full"
-                  style={{ backgroundColor: `${acao.color}15` }}
-                >
-                  <acao.icon className="h-6 w-6" style={{ color: acao.color }} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">{acao.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{acao.description}</p>
-                  <Button 
-                    className="w-full"
-                    style={acao.buttonStyle}
-                  >
-                    {acao.title}
-                  </Button>
-                </div>
-              </div>
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={() => navigate("/account/produtos/novo")} style={{ backgroundColor: "#10B981" }} className="text-white">
+            <Plus className="h-4 w-4 mr-2" /> Adicionar Publicação
+          </Button>
+        </div>
+
+        {loading ? (
+          <p className="text-muted-foreground">Carregando...</p>
+        ) : produtosVisiveis.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Você ainda não cadastrou nenhum produto.
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <div className="grid gap-4">
+            {produtosVisiveis.map((produto) => (
+              <Card key={produto.id}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border flex-shrink-0 bg-muted">
+                    {produto.imagens[0] ? (
+                      <img src={produto.imagens[0].url} alt={produto.nome} className="w-full h-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{produto.nome}</h4>
+                      <Badge className={statusColor[produto.status]}>{statusLabel[produto.status]}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      R$ {produto.preco.toFixed(2)}
+                      {produto.sku ? ` · SKU ${produto.sku}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => alternarStatus(produto)}>
+                      {produto.status === "pausado" ? (
+                        <><Play className="h-4 w-4 mr-1" /> Reativar</>
+                      ) : (
+                        <><Pause className="h-4 w-4 mr-1" /> Pausar</>
+                      )}
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => remover(produto)}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Remover
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </AccountLayout>
   );

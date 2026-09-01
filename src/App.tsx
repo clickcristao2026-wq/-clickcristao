@@ -29,6 +29,7 @@ import Mercadoria from "./pages/account/Mercadoria";
 import MercadoriaVendedor from "./pages/account/MercadoriaVendedor";
 import MercadoriaAnunciante from "./pages/account/MercadoriaAnunciante";
 import Produtos from "./pages/account/Produtos";
+import CadastroProduto from "./pages/account/CadastroProduto";
 import Notificacao from "./pages/account/Notificacao";
 import Configuracao from "./pages/account/Configuracao";
 import ExcluirConta from "./pages/account/ExcluirConta";
@@ -39,6 +40,7 @@ import Avaliacao from "./pages/account/Avaliacao";
 import AdminCadastrados from "./pages/admin/Cadastrados";
 import AdminRegistrados from "./pages/admin/Registrados";
 import AdminProdutos from "./pages/admin/Produtos";
+import AdminCatalogo from "./pages/admin/Catalogo";
 import AdminAnuncios from "./pages/admin/Anuncios";
 import AdminMinhaLoja from "./pages/admin/MinhaLoja";
 import AdminVendidos from "./pages/admin/Vendidos";
@@ -146,6 +148,7 @@ const App = () => (
                       <Route path="/mercadoria-vendedor" element={<MercadoriaVendedor />} />
                       <Route path="/mercadoria-anunciante" element={<MercadoriaAnunciante />} />
                       <Route path="/produtos" element={<Produtos />} />
+                      <Route path="/produtos/novo" element={<CadastroProduto />} />
                       <Route path="/notificacao" element={<Notificacao />} />
                       <Route path="/configuracao" element={<Configuracao />} />
                       <Route path="/excluir-conta" element={<ExcluirConta />} />
@@ -165,6 +168,7 @@ const App = () => (
                       <Route path="/cadastrados" element={<AdminCadastrados />} />
                       <Route path="/registrados" element={<AdminRegistrados />} />
                       <Route path="/produtos" element={<AdminProdutos />} />
+                      <Route path="/catalogo" element={<AdminCatalogo />} />
                       <Route path="/anuncios" element={<AdminAnuncios />} />
                       <Route path="/minha-loja" element={<AdminMinhaLoja />} />
                       <Route path="/vendidos" element={<AdminVendidos />} />
