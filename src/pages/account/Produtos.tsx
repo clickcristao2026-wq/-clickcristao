@@ -4,7 +4,7 @@ import { AccountLayout } from "@/components/AccountLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pause, Play, Trash2 } from "lucide-react";
+import { Plus, Pause, Play, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProducts, updateProductStatus } from "@/lib/products";
 import { Product, ProductStatus } from "@/types/product";
@@ -103,6 +103,13 @@ const Produtos = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/account/produtos/${produto.id}/editar`)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" /> Editar
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => alternarStatus(produto)}>
                       {produto.status === "pausado" ? (
                         <><Play className="h-4 w-4 mr-1" /> Reativar</>

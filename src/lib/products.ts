@@ -6,6 +6,7 @@ import {
   ProductAttribute,
   ProductCategory,
   ProductFormPayload,
+  ProductImage,
   ProductStatus,
 } from "@/types/product";
 
@@ -262,6 +263,63 @@ export async function fetchAllProductsForAdmin(): Promise<Product[]> {
   return (data as unknown as ProductRow[]).map(mapProductRow);
 }
 
+const STORAGE_BUCKET = "product-images";
+const STORAGE_PUBLIC_MARKER = `/${STORAGE_BUCKET}/`;
+
+// Envia os arquivos para o Storage e registra cada um em product_images.
+// Devolve quantos foram enviados com sucesso.
+async function uploadProductImages(
+  sellerId: string,
+  productId: string,
+  files: File[],
+  ordemInicial = 0
+): Promise<number> {
+  const uploads = await Promise.all(
+    files.map(async (file, idx) => {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${sellerId}/${productId}/${Date.now()}_${idx}_${safeName}`;
+      const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file);
+      if (uploadError) return null;
+      const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return { product_id: productId, url: pub.publicUrl, ordem: ordemInicial + idx };
+    })
+  );
+
+  const validRows = uploads.filter((row): row is NonNullable<typeof row> => row !== null);
+  if (validRows.length > 0) {
+    await supabase.from("product_images").insert(validRows);
+  }
+  return validRows.length;
+}
+
+// A URL pública tem o formato .../object/public/product-images/{caminho};
+// recuperar o caminho permite apagar o arquivo do Storage junto com o registro,
+// em vez de deixar arquivo órfão no bucket.
+function storagePathFromPublicUrl(url: string): string | null {
+  const marker = url.indexOf(STORAGE_PUBLIC_MARKER);
+  if (marker === -1) return null;
+  return decodeURIComponent(url.slice(marker + STORAGE_PUBLIC_MARKER.length));
+}
+
+async function removeProductImages(imagens: ProductImage[]): Promise<void> {
+  if (imagens.length === 0) return;
+
+  const paths = imagens
+    .map((img) => storagePathFromPublicUrl(img.url))
+    .filter((path): path is string => Boolean(path));
+  if (paths.length > 0) {
+    await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+  }
+
+  await supabase
+    .from("product_images")
+    .delete()
+    .in(
+      "id",
+      imagens.map((img) => img.id)
+    );
+}
+
 interface CreateProductResult extends OpResult {
   productId?: string;
 }
@@ -314,27 +372,96 @@ export async function createProduct(sellerId: string, payload: ProductFormPayloa
   }
 
   if (payload.imagens.length > 0) {
-    const uploads = await Promise.all(
-      payload.imagens.map(async (file, idx) => {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${sellerId}/${productId}/${Date.now()}_${idx}_${safeName}`;
-        const { error: uploadError } = await supabase.storage.from("product-images").upload(path, file);
-        if (uploadError) return null;
-        const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
-        return { product_id: productId, url: pub.publicUrl, ordem: idx };
-      })
-    );
-
-    const validRows = uploads.filter((row): row is NonNullable<typeof row> => row !== null);
-    if (validRows.length > 0) {
-      await supabase.from("product_images").insert(validRows);
-    }
-    if (validRows.length < payload.imagens.length) {
+    const enviadas = await uploadProductImages(sellerId, productId, payload.imagens);
+    if (enviadas < payload.imagens.length) {
       return { ok: true, productId, error: "Produto criado, mas algumas imagens não puderam ser enviadas." };
     }
   }
 
   return { ok: true, productId };
+}
+
+export async function fetchProductById(productId: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("id", productId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return mapProductRow(data as unknown as ProductRow);
+}
+
+export async function updateProduct(
+  sellerId: string,
+  productId: string,
+  payload: ProductFormPayload,
+  imagensRemovidas: ProductImage[] = []
+): Promise<OpResult> {
+  if (!payload.nome || !payload.categoriaId || !(payload.preco > 0)) {
+    return { ok: false, error: "Preencha nome, categoria e preço do produto." };
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      categoria_id: payload.categoriaId,
+      nome: payload.nome,
+      modelo: payload.modelo || null,
+      preco: payload.preco,
+      preco_parcelado_texto: payload.precoParceladoTexto || null,
+      descricao: payload.descricao || null,
+      ficha_tecnica: payload.fichaTecnica || null,
+      beneficios_texto: payload.beneficiosTexto || null,
+      curiosidade: payload.curiosidade || null,
+      modo_uso_cuidados: payload.modoUsoCuidados || null,
+      garantia_satisfacao: payload.garantiaSatisfacao || null,
+      sku: payload.sku || null,
+      status: payload.status,
+    })
+    .eq("id", productId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  // A seleção de atributos é trocada por inteiro pela nova.
+  const { error: delSelError } = await supabase
+    .from("product_attribute_selections")
+    .delete()
+    .eq("product_id", productId);
+  if (delSelError) {
+    return { ok: true, error: `Produto salvo, mas os atributos não puderam ser atualizados: ${delSelError.message}` };
+  }
+
+  if (payload.atributoValorIds.length > 0) {
+    const rows = payload.atributoValorIds.map((attribute_value_id) => ({
+      product_id: productId,
+      attribute_value_id,
+    }));
+    const { error: insSelError } = await supabase.from("product_attribute_selections").insert(rows);
+    if (insSelError) {
+      return { ok: true, error: `Produto salvo, mas os atributos não puderam ser atualizados: ${insSelError.message}` };
+    }
+  }
+
+  await removeProductImages(imagensRemovidas);
+
+  if (payload.imagens.length > 0) {
+    const { data: ultima } = await supabase
+      .from("product_images")
+      .select("ordem")
+      .eq("product_id", productId)
+      .order("ordem", { ascending: false })
+      .limit(1);
+    const proximaOrdem = ultima && ultima.length > 0 ? (ultima[0] as { ordem: number }).ordem + 1 : 0;
+
+    const enviadas = await uploadProductImages(sellerId, productId, payload.imagens, proximaOrdem);
+    if (enviadas < payload.imagens.length) {
+      return { ok: true, error: "Produto salvo, mas algumas imagens novas não puderam ser enviadas." };
+    }
+  }
+
+  return { ok: true };
 }
 
 export async function updateProductStatus(productId: string, status: ProductStatus): Promise<OpResult> {

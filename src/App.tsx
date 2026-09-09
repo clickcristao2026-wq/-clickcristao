@@ -149,6 +149,7 @@ const App = () => (
                       <Route path="/mercadoria-anunciante" element={<MercadoriaAnunciante />} />
                       <Route path="/produtos" element={<Produtos />} />
                       <Route path="/produtos/novo" element={<CadastroProduto />} />
+                      <Route path="/produtos/:id/editar" element={<CadastroProduto />} />
                       <Route path="/notificacao" element={<Notificacao />} />
                       <Route path="/configuracao" element={<Configuracao />} />
                       <Route path="/excluir-conta" element={<ExcluirConta />} />
