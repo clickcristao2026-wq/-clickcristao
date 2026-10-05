@@ -52,6 +52,8 @@ Fotos antigas são preservadas; as duas primeiras tornam-se destaques. Produtos 
 
 O acesso público do site foi usado para configurar `.env.local`, ignorado pelo Git. Esse acesso não permite instalar migrações, publicar funções nem cadastrar segredos. É necessário conectar a integração Supabase à conta do projeto ou autenticar a CLI.
 
+Para ativar pelo painel do Supabase, sem autenticar a CLI, seguir `supabase/dashboard/LEIA-ME.md`. Os arquivos completos `ai-settings.ts` e `ai-agent.ts` dessa pasta podem ser copiados individualmente para o editor. Eles incorporam os módulos compartilhados e recusam requisições quando o identificador do projeto for diferente de `xqmvlozonwudwewjlpfe`.
+
 **Ordem de implantação: banco, segredos, funções e frontend.** Não publique o frontend antes de atualizar o banco: o novo cadastro depende das tabelas e funções SQL abaixo.
 
 1. No projeto existente, aplicar, nesta ordem:
