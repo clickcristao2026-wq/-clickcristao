@@ -254,7 +254,7 @@ export default function AdminCatalogo() {
   }
 
   return (
-    <AdminLayout title="Categorias e Atributos">
+    <AdminLayout title="Categorias">
       <Tabs defaultValue="categorias">
         <TabsList>
           <TabsTrigger value="categorias">Categorias</TabsTrigger>

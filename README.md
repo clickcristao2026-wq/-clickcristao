@@ -1,5 +1,9 @@
 # Welcome to your Lovable project
 
+## Cadastro de produtos e integração OpenAI
+
+As alterações do cadastro em três etapas e dos agentes OpenAI estão descritas em [docs/IMPLEMENTACAO_IA.md](docs/IMPLEMENTACAO_IA.md), incluindo os cálculos, as migrações e a ordem de ativação no Supabase/Vercel. Modelo utilizado: `gpt-6-luna`.
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/309aca4a-e4b2-4a11-9dea-502fe55142db

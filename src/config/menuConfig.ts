@@ -16,6 +16,7 @@ import {
   Megaphone,
   MessageSquare,
   LucideIcon,
+  Bot,
 } from "lucide-react";
 import { TipoUsuario, TipoConta } from "@/contexts/UserContext";
 
@@ -119,7 +120,7 @@ export function getMenuForUser(tipoUsuario: TipoUsuario, tipoConta: TipoConta): 
   secondaryItems.push(excluirContaItem);
 
   return [
-    { items: mainMenu },
+    { items: [...mainMenu.filter(item => item.title !== "Sair"), { title: "Inteligência Artificial", url: "/account/inteligencia-artificial", icon: Bot }, ...mainMenu.filter(item => item.title === "Sair")] },
     { items: secondaryItems, separator: true },
   ];
 }

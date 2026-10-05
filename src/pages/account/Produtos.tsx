@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pause, Play, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProducts, updateProductStatus } from "@/lib/products";
+import { formatBRL } from "@/lib/pricing";
 import { Product, ProductStatus } from "@/types/product";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,7 +45,7 @@ const Produtos = () => {
   }, [user?.id]);
 
   const alternarStatus = async (produto: Product) => {
-    const novoStatus: ProductStatus = produto.status === "pausado" ? "publicado" : "pausado";
+    const novoStatus: ProductStatus = produto.status === "publicado" ? "pausado" : "publicado";
     const result = await updateProductStatus(produto.id, novoStatus);
     if (!result.ok) {
       toast({ title: "Erro", description: result.error, variant: "destructive" });
@@ -88,8 +89,8 @@ const Produtos = () => {
               <Card key={produto.id}>
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="w-20 h-20 rounded-lg overflow-hidden border flex-shrink-0 bg-muted">
-                    {produto.imagens[0] ? (
-                      <img src={produto.imagens[0].url} alt={produto.nome} className="w-full h-full object-cover" />
+                    {(produto.imagens.find(image => image.papel === "destaque") ?? produto.imagens[0]) ? (
+                      <img src={(produto.imagens.find(image => image.papel === "destaque") ?? produto.imagens[0]).url} alt={produto.nome} className="w-full h-full object-cover" />
                     ) : null}
                   </div>
                   <div className="flex-1">
@@ -98,7 +99,7 @@ const Produtos = () => {
                       <Badge className={statusColor[produto.status]}>{statusLabel[produto.status]}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      R$ {produto.preco.toFixed(2)}
+                      {formatBRL(produto.preco)}
                       {produto.sku ? ` · SKU ${produto.sku}` : ""}
                     </p>
                   </div>
@@ -111,8 +112,8 @@ const Produtos = () => {
                       <Pencil className="h-4 w-4 mr-1" /> Editar
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => alternarStatus(produto)}>
-                      {produto.status === "pausado" ? (
-                        <><Play className="h-4 w-4 mr-1" /> Reativar</>
+                      {produto.status !== "publicado" ? (
+                        <><Play className="h-4 w-4 mr-1" /> {produto.status === "rascunho" ? "Publicar" : "Reativar"}</>
                       ) : (
                         <><Pause className="h-4 w-4 mr-1" /> Pausar</>
                       )}

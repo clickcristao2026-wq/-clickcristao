@@ -33,12 +33,33 @@ export interface ProductAttribute {
 }
 
 export type ProductStatus = "rascunho" | "publicado" | "pausado" | "removido";
+export type MediaRole = "destaque" | "galeria" | "corpo" | "video";
+export interface ProductEvaluation {
+  vendeOnline: boolean | null;
+  produtoEstrelas: number;
+  atendimentoEstrelas: number;
+  vendasMensais: number | null;
+  links: string[];
+}
+export interface ProductDetails {
+  conteudoAnuncio: string;
+  nomeLoja: string;
+  qualidade: string;
+  secao: "premium" | "intermediario" | "popular" | "";
+  avaliacao: ProductEvaluation;
+  precificacao: import("@/lib/pricing").ProductPricing;
+}
+export interface ProductMediaUpload {
+  file: File;
+  papel: MediaRole;
+}
 
 export interface ProductImage {
   id: string;
   productId: string;
   url: string;
   ordem: number;
+  papel: MediaRole;
 }
 
 export interface Product {
@@ -61,7 +82,9 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   imagens: ProductImage[];
+  midias: ProductImage[];
   atributoValorIds: string[];
+  detalhes: ProductDetails;
 }
 
 // Payload usado ao criar/editar um produto pelo formulário.
@@ -80,5 +103,6 @@ export interface ProductFormPayload {
   sku: string;
   status: ProductStatus;
   atributoValorIds: string[];
-  imagens: File[];
+  imagens: ProductMediaUpload[];
+  detalhes: ProductDetails;
 }

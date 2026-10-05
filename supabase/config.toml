@@ -1,0 +1,6 @@
+[functions.ai-settings]
+verify_jwt = false
+
+[functions.ai-agent]
+verify_jwt = false
+# A autenticação JWT é validada no handler com auth.getUser(), antes de qualquer operação.

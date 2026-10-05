@@ -8,7 +8,11 @@ import {
   ProductFormPayload,
   ProductImage,
   ProductStatus,
+  ProductDetails,
+  ProductMediaUpload,
+  MediaRole,
 } from "@/types/product";
+import { normalizeDetails } from "@/lib/product-form";
 
 interface OpResult {
   ok: boolean;
@@ -61,6 +65,7 @@ interface ProductImageRow {
   product_id: string;
   url: string;
   ordem: number;
+  papel: MediaRole;
 }
 
 interface ProductRow {
@@ -84,6 +89,8 @@ interface ProductRow {
   updated_at: string;
   product_images: ProductImageRow[] | null;
   product_attribute_selections: { attribute_value_id: string }[] | null;
+  detalhes: ProductDetails | null;
+  product_pricing: { data: ProductDetails["precificacao"] } | null;
 }
 
 // =============================================================================
@@ -126,13 +133,22 @@ export async function createCategory(input: {
   return { ok: !error, error: error?.message };
 }
 
-export async function setCategoryActive(id: string, ativo: boolean): Promise<OpResult> {
-  const { error } = await supabase.from("product_categories").update({ ativo }).eq("id", id);
+export async function setCategoryActive(
+  id: string,
+  ativo: boolean,
+): Promise<OpResult> {
+  const { error } = await supabase
+    .from("product_categories")
+    .update({ ativo })
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
 export async function deleteCategory(id: string): Promise<OpResult> {
-  const { error } = await supabase.from("product_categories").delete().eq("id", id);
+  const { error } = await supabase
+    .from("product_categories")
+    .delete()
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
@@ -183,17 +199,29 @@ export async function createAttribute(input: {
   return { ok: !error, error: error?.message };
 }
 
-export async function setAttributeActive(id: string, ativo: boolean): Promise<OpResult> {
-  const { error } = await supabase.from("product_attributes").update({ ativo }).eq("id", id);
+export async function setAttributeActive(
+  id: string,
+  ativo: boolean,
+): Promise<OpResult> {
+  const { error } = await supabase
+    .from("product_attributes")
+    .update({ ativo })
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
 export async function deleteAttribute(id: string): Promise<OpResult> {
-  const { error } = await supabase.from("product_attributes").delete().eq("id", id);
+  const { error } = await supabase
+    .from("product_attributes")
+    .delete()
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
-export async function createAttributeValue(attributeId: string, valor: string): Promise<OpResult> {
+export async function createAttributeValue(
+  attributeId: string,
+  valor: string,
+): Promise<OpResult> {
   const { error } = await supabase.from("product_attribute_values").insert({
     attribute_id: attributeId,
     valor,
@@ -201,13 +229,22 @@ export async function createAttributeValue(attributeId: string, valor: string): 
   return { ok: !error, error: error?.message };
 }
 
-export async function setAttributeValueActive(id: string, ativo: boolean): Promise<OpResult> {
-  const { error } = await supabase.from("product_attribute_values").update({ ativo }).eq("id", id);
+export async function setAttributeValueActive(
+  id: string,
+  ativo: boolean,
+): Promise<OpResult> {
+  const { error } = await supabase
+    .from("product_attribute_values")
+    .update({ ativo })
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
 export async function deleteAttributeValue(id: string): Promise<OpResult> {
-  const { error } = await supabase.from("product_attribute_values").delete().eq("id", id);
+  const { error } = await supabase
+    .from("product_attribute_values")
+    .delete()
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
@@ -236,13 +273,43 @@ function mapProductRow(row: ProductRow): Product {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     imagens: (row.product_images ?? [])
-      .map((img) => ({ id: img.id, productId: img.product_id, url: img.url, ordem: img.ordem }))
+      .map((img) => ({
+        id: img.id,
+        productId: img.product_id,
+        url: img.url,
+        ordem: img.ordem,
+        papel: img.papel ?? "galeria",
+      }))
+      .filter((img) => img.papel !== "video")
+      .sort(
+        (a, b) =>
+          Number(b.papel === "destaque") - Number(a.papel === "destaque") ||
+          a.ordem - b.ordem,
+      ),
+    atributoValorIds: (row.product_attribute_selections ?? []).map(
+      (s) => s.attribute_value_id,
+    ),
+    detalhes: normalizeDetails(
+      {
+        ...row.detalhes,
+        precificacao: row.product_pricing?.data ?? row.detalhes?.precificacao,
+      },
+      Number(row.preco),
+    ),
+    midias: (row.product_images ?? [])
+      .map((img) => ({
+        id: img.id,
+        productId: img.product_id,
+        url: img.url,
+        ordem: img.ordem,
+        papel: img.papel ?? "galeria",
+      }))
       .sort((a, b) => a.ordem - b.ordem),
-    atributoValorIds: (row.product_attribute_selections ?? []).map((s) => s.attribute_value_id),
   };
 }
 
-const PRODUCT_SELECT = "*, product_images(*), product_attribute_selections(attribute_value_id)";
+const PRODUCT_SELECT =
+  "*, product_images(*), product_attribute_selections(attribute_value_id), product_pricing(data)";
 
 export async function fetchMyProducts(sellerId: string): Promise<Product[]> {
   const { data, error } = await supabase
@@ -264,124 +331,186 @@ export async function fetchAllProductsForAdmin(): Promise<Product[]> {
 }
 
 const STORAGE_BUCKET = "product-images";
-const STORAGE_PUBLIC_MARKER = `/${STORAGE_BUCKET}/`;
 
 // Envia os arquivos para o Storage e registra cada um em product_images.
 // Devolve quantos foram enviados com sucesso.
 async function uploadProductImages(
   sellerId: string,
   productId: string,
-  files: File[],
-  ordemInicial = 0
+  files: ProductMediaUpload[],
+  ordemInicial = 0,
 ): Promise<number> {
   const uploads = await Promise.all(
-    files.map(async (file, idx) => {
+    files.map(async ({ file, papel }, idx) => {
+      const bucket = papel === "video" ? "product-videos" : STORAGE_BUCKET;
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${sellerId}/${productId}/${Date.now()}_${idx}_${safeName}`;
-      const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file);
+      const path = `${sellerId}/${productId}/${crypto.randomUUID()}_${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(path, file);
       if (uploadError) return null;
-      const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-      return { product_id: productId, url: pub.publicUrl, ordem: ordemInicial + idx };
-    })
+      const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
+      const { error: insertError } = await supabase
+        .from("product_images")
+        .insert({
+          product_id: productId,
+          url: pub.publicUrl,
+          ordem: ordemInicial + idx,
+          papel,
+        });
+      if (insertError) {
+        await supabase.storage.from(bucket).remove([path]);
+        return null;
+      }
+      return true;
+    }),
   );
 
-  const validRows = uploads.filter((row): row is NonNullable<typeof row> => row !== null);
-  if (validRows.length > 0) {
-    await supabase.from("product_images").insert(validRows);
-  }
+  const validRows = uploads.filter(
+    (row): row is NonNullable<typeof row> => row !== null,
+  );
   return validRows.length;
 }
 
 // A URL pública tem o formato .../object/public/product-images/{caminho};
 // recuperar o caminho permite apagar o arquivo do Storage junto com o registro,
 // em vez de deixar arquivo órfão no bucket.
-function storagePathFromPublicUrl(url: string): string | null {
-  const marker = url.indexOf(STORAGE_PUBLIC_MARKER);
+function storagePathFromPublicUrl(url: string, bucket: string): string | null {
+  const bucketMarker = `/object/public/${bucket}/`;
+  const marker = url.indexOf(bucketMarker);
   if (marker === -1) return null;
-  return decodeURIComponent(url.slice(marker + STORAGE_PUBLIC_MARKER.length));
+  return decodeURIComponent(url.slice(marker + bucketMarker.length));
 }
 
-async function removeProductImages(imagens: ProductImage[]): Promise<void> {
-  if (imagens.length === 0) return;
-
-  const paths = imagens
-    .map((img) => storagePathFromPublicUrl(img.url))
-    .filter((path): path is string => Boolean(path));
-  if (paths.length > 0) {
-    await supabase.storage.from(STORAGE_BUCKET).remove(paths);
-  }
-
-  await supabase
+async function removeProductImages(
+  imagens: ProductImage[],
+): Promise<string | null> {
+  if (imagens.length === 0) return null;
+  const { error } = await supabase
     .from("product_images")
     .delete()
     .in(
       "id",
-      imagens.map((img) => img.id)
+      imagens.map((img) => img.id),
     );
+  if (error) return "Algumas mídias não puderam ser removidas.";
+  for (const bucket of [STORAGE_BUCKET, "product-videos"]) {
+    const paths = imagens
+      .map((img) => storagePathFromPublicUrl(img.url, bucket))
+      .filter((p): p is string => Boolean(p));
+    if (paths.length) {
+      const { error: storageError } = await supabase.storage
+        .from(bucket)
+        .remove(paths);
+      if (storageError)
+        return "As mídias foram removidas do anúncio, mas alguns arquivos ainda estão no armazenamento.";
+    }
+  }
+  return null;
 }
 
 interface CreateProductResult extends OpResult {
   productId?: string;
 }
 
-export async function createProduct(sellerId: string, payload: ProductFormPayload): Promise<CreateProductResult> {
-  if (!payload.nome || !payload.categoriaId || !(payload.preco > 0)) {
+async function saveRecord(
+  productId: string | null,
+  payload: ProductFormPayload,
+): Promise<CreateProductResult> {
+  if (
+    !payload.nome.trim() ||
+    !payload.categoriaId ||
+    !Number.isFinite(payload.preco) ||
+    payload.preco <= 0
+  ) {
     return { ok: false, error: "Preencha nome, categoria e preço do produto." };
   }
-
-  const { data: product, error } = await supabase
-    .from("products")
-    .insert({
-      seller_id: sellerId,
+  const { data, error } = await supabase.rpc("save_product_record", {
+    p_product_id: productId,
+    p_data: {
       categoria_id: payload.categoriaId,
-      nome: payload.nome,
-      modelo: payload.modelo || null,
+      nome: payload.nome.trim(),
+      modelo: payload.modelo,
       preco: payload.preco,
-      preco_parcelado_texto: payload.precoParceladoTexto || null,
-      descricao: payload.descricao || null,
-      ficha_tecnica: payload.fichaTecnica || null,
-      beneficios_texto: payload.beneficiosTexto || null,
-      curiosidade: payload.curiosidade || null,
-      modo_uso_cuidados: payload.modoUsoCuidados || null,
-      garantia_satisfacao: payload.garantiaSatisfacao || null,
-      sku: payload.sku || null,
-      status: payload.status,
-    })
-    .select()
-    .single();
-
-  if (error || !product) {
-    return { ok: false, error: error?.message ?? "Não foi possível criar o produto." };
-  }
-
-  const productId = (product as { id: string }).id;
-
-  if (payload.atributoValorIds.length > 0) {
-    const rows = payload.atributoValorIds.map((attribute_value_id) => ({
-      product_id: productId,
-      attribute_value_id,
-    }));
-    const { error: selError } = await supabase.from("product_attribute_selections").insert(rows);
-    if (selError) {
-      return {
-        ok: true,
-        productId,
-        error: `Produto criado, mas houve um erro ao salvar os atributos: ${selError.message}`,
-      };
-    }
-  }
-
-  if (payload.imagens.length > 0) {
-    const enviadas = await uploadProductImages(sellerId, productId, payload.imagens);
-    if (enviadas < payload.imagens.length) {
-      return { ok: true, productId, error: "Produto criado, mas algumas imagens não puderam ser enviadas." };
-    }
-  }
-
-  return { ok: true, productId };
+      preco_parcelado_texto: payload.precoParceladoTexto,
+      descricao: payload.descricao,
+      ficha_tecnica: payload.fichaTecnica,
+      beneficios_texto: payload.beneficiosTexto,
+      curiosidade: payload.curiosidade,
+      modo_uso_cuidados: payload.modoUsoCuidados,
+      garantia_satisfacao: payload.garantiaSatisfacao,
+      sku: payload.sku,
+      detalhes: payload.detalhes,
+    },
+    p_attribute_ids: payload.atributoValorIds,
+  });
+  if (error || !data)
+    return {
+      ok: false,
+      error: error?.message ?? "Não foi possível salvar o produto.",
+    };
+  return { ok: true, productId: data as string };
 }
 
-export async function fetchProductById(productId: string): Promise<Product | null> {
+async function finishMedia(
+  sellerId: string,
+  productId: string,
+  payload: ProductFormPayload,
+  removed: ProductImage[] = [],
+): Promise<OpResult> {
+  const warnings: string[] = [];
+  try {
+    const removalWarning = await removeProductImages(removed);
+    if (removalWarning) warnings.push(removalWarning);
+    if (payload.imagens.length) {
+      const { data: last, error } = await supabase
+        .from("product_images")
+        .select("ordem")
+        .eq("product_id", productId)
+        .order("ordem", { ascending: false })
+        .limit(1);
+      if (error) warnings.push("Não foi possível consultar as mídias salvas.");
+      else {
+        const initialOrder = last?.length ? Number(last[0].ordem) + 1 : 0;
+        const uploaded = await uploadProductImages(
+          sellerId,
+          productId,
+          payload.imagens,
+          initialOrder,
+        );
+        if (uploaded < payload.imagens.length)
+          warnings.push("Algumas mídias não puderam ser enviadas.");
+      }
+    }
+  } catch {
+    warnings.push("Houve uma falha ao salvar as mídias.");
+  }
+  if (!warnings.length) {
+    const status = await updateProductStatus(productId, payload.status);
+    if (!status.ok)
+      warnings.push(status.error ?? "Não foi possível atualizar o status.");
+  }
+  return {
+    ok: true,
+    error: warnings.length
+      ? `Os dados foram salvos como rascunho. ${warnings.join(" ")} Abra o produto para completar o registro.`
+      : undefined,
+  };
+}
+
+export async function createProduct(
+  sellerId: string,
+  payload: ProductFormPayload,
+): Promise<CreateProductResult> {
+  const result = await saveRecord(null, payload);
+  if (!result.ok || !result.productId) return result;
+  const media = await finishMedia(sellerId, result.productId, payload);
+  return { ...result, error: media.error };
+}
+
+export async function fetchProductById(
+  productId: string,
+): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
     .select(PRODUCT_SELECT)
@@ -395,76 +524,22 @@ export async function updateProduct(
   sellerId: string,
   productId: string,
   payload: ProductFormPayload,
-  imagensRemovidas: ProductImage[] = []
+  removed: ProductImage[] = [],
 ): Promise<OpResult> {
-  if (!payload.nome || !payload.categoriaId || !(payload.preco > 0)) {
-    return { ok: false, error: "Preencha nome, categoria e preço do produto." };
-  }
-
-  const { error } = await supabase
-    .from("products")
-    .update({
-      categoria_id: payload.categoriaId,
-      nome: payload.nome,
-      modelo: payload.modelo || null,
-      preco: payload.preco,
-      preco_parcelado_texto: payload.precoParceladoTexto || null,
-      descricao: payload.descricao || null,
-      ficha_tecnica: payload.fichaTecnica || null,
-      beneficios_texto: payload.beneficiosTexto || null,
-      curiosidade: payload.curiosidade || null,
-      modo_uso_cuidados: payload.modoUsoCuidados || null,
-      garantia_satisfacao: payload.garantiaSatisfacao || null,
-      sku: payload.sku || null,
-      status: payload.status,
-    })
-    .eq("id", productId);
-
-  if (error) {
-    return { ok: false, error: error.message };
-  }
-
-  // A seleção de atributos é trocada por inteiro pela nova.
-  const { error: delSelError } = await supabase
-    .from("product_attribute_selections")
-    .delete()
-    .eq("product_id", productId);
-  if (delSelError) {
-    return { ok: true, error: `Produto salvo, mas os atributos não puderam ser atualizados: ${delSelError.message}` };
-  }
-
-  if (payload.atributoValorIds.length > 0) {
-    const rows = payload.atributoValorIds.map((attribute_value_id) => ({
-      product_id: productId,
-      attribute_value_id,
-    }));
-    const { error: insSelError } = await supabase.from("product_attribute_selections").insert(rows);
-    if (insSelError) {
-      return { ok: true, error: `Produto salvo, mas os atributos não puderam ser atualizados: ${insSelError.message}` };
-    }
-  }
-
-  await removeProductImages(imagensRemovidas);
-
-  if (payload.imagens.length > 0) {
-    const { data: ultima } = await supabase
-      .from("product_images")
-      .select("ordem")
-      .eq("product_id", productId)
-      .order("ordem", { ascending: false })
-      .limit(1);
-    const proximaOrdem = ultima && ultima.length > 0 ? (ultima[0] as { ordem: number }).ordem + 1 : 0;
-
-    const enviadas = await uploadProductImages(sellerId, productId, payload.imagens, proximaOrdem);
-    if (enviadas < payload.imagens.length) {
-      return { ok: true, error: "Produto salvo, mas algumas imagens novas não puderam ser enviadas." };
-    }
-  }
-
-  return { ok: true };
+  const result = await saveRecord(productId, payload);
+  if (!result.ok) return result;
+  return finishMedia(sellerId, productId, payload, removed);
 }
 
-export async function updateProductStatus(productId: string, status: ProductStatus): Promise<OpResult> {
-  const { error } = await supabase.from("products").update({ status }).eq("id", productId);
+export async function updateProductStatus(
+  productId: string,
+  status: ProductStatus,
+): Promise<OpResult> {
+  const { error } = await supabase
+    .from("products")
+    .update({ status })
+    .eq("id", productId)
+    .select("id")
+    .single();
   return { ok: !error, error: error?.message };
 }

@@ -33,7 +33,7 @@ const adminMenu: AdminMenuItem[] = [
   { title: "Cadastrados", url: "/admin/cadastrados", icon: Users },
   { title: "Registrados", url: "/admin/registrados", icon: Store },
   { title: "Produtos", url: "/admin/produtos", icon: Package },
-  { title: "Categorias e Atributos", url: "/admin/catalogo", icon: Tags },
+  { title: "Categorias", url: "/admin/catalogo", icon: Tags },
   { title: "Anúncios", url: "/admin/anuncios", icon: Megaphone },
   { title: "Minha Loja", url: "/admin/minha-loja", icon: Store },
   { title: "Vendidos", url: "/admin/vendidos", icon: ShoppingCart },

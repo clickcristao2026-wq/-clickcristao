@@ -35,6 +35,7 @@ import Configuracao from "./pages/account/Configuracao";
 import ExcluirConta from "./pages/account/ExcluirConta";
 import Historico from "./pages/account/Historico";
 import Avaliacao from "./pages/account/Avaliacao";
+import InteligenciaArtificial from "./pages/account/InteligenciaArtificial";
 
 // Admin pages
 import AdminCadastrados from "./pages/admin/Cadastrados";
@@ -155,6 +156,7 @@ const App = () => (
                       <Route path="/excluir-conta" element={<ExcluirConta />} />
                       <Route path="/historico" element={<Historico />} />
                       <Route path="/avaliacao" element={<Avaliacao />} />
+                      <Route path="/inteligencia-artificial" element={<InteligenciaArtificial />} />
                     </Routes>
                   </SidebarProvider>
                 </ProtectedRoute>
