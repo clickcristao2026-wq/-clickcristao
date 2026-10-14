@@ -40,6 +40,7 @@ interface CategoryRow {
   slug: string;
   ordem: number;
   ativo: boolean;
+  attributes_configured?: boolean;
 }
 
 interface AttributeValueRow {
@@ -48,6 +49,7 @@ interface AttributeValueRow {
   valor: string;
   ordem: number;
   ativo: boolean;
+  descricao?: string;
 }
 
 interface AttributeRow {
@@ -57,6 +59,7 @@ interface AttributeRow {
   selecao: AttributeSelectionMode;
   ordem: number;
   ativo: boolean;
+  category_id?: string | null;
   product_attribute_values: AttributeValueRow[] | null;
 }
 
@@ -106,17 +109,26 @@ function mapCategoryRow(row: CategoryRow): ProductCategory {
     slug: row.slug,
     ordem: row.ordem,
     ativo: row.ativo,
+    attributesConfigured: row.attributes_configured ?? false,
   };
 }
 
 export async function fetchCategoryTree(): Promise<ProductCategory[]> {
-  const { data, error } = await supabase
-    .from("product_categories")
-    .select("*")
-    .order("nivel", { ascending: true })
-    .order("ordem", { ascending: true });
-  if (error || !data) return [];
-  return (data as CategoryRow[]).map(mapCategoryRow);
+  const rows: CategoryRow[] = [];
+  for (let start = 0; ; start += 1000) {
+    const { data, error } = await supabase
+      .from("product_categories")
+      .select("*")
+      .order("nivel", { ascending: true })
+      .order("ordem", { ascending: true })
+      .order("nome", { ascending: true })
+      .order("id", { ascending: true })
+      .range(start, start + 999);
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as CategoryRow[]));
+    if (!data || data.length < 1000) break;
+  }
+  return rows.map(mapCategoryRow);
 }
 
 export async function createCategory(input: {
@@ -164,6 +176,7 @@ function mapAttributeRow(row: AttributeRow): ProductAttribute {
       valor: v.valor,
       ordem: v.ordem,
       ativo: v.ativo,
+      descricao: v.descricao ?? "",
     }))
     .sort((a, b) => a.ordem - b.ordem);
 
@@ -174,28 +187,70 @@ function mapAttributeRow(row: AttributeRow): ProductAttribute {
     selecao: row.selecao,
     ordem: row.ordem,
     ativo: row.ativo,
+    categoryId: row.category_id ?? null,
     valores,
   };
 }
 
 export async function fetchAttributes(): Promise<ProductAttribute[]> {
-  const { data, error } = await supabase
-    .from("product_attributes")
-    .select("*, product_attribute_values(*)")
-    .order("ordem", { ascending: true });
-  if (error || !data) return [];
-  return (data as AttributeRow[]).map(mapAttributeRow);
+  const rows: AttributeRow[] = [];
+  for (let start = 0; ; start += 1000) {
+    const { data, error } = await supabase
+      .from("product_attributes")
+      .select("*, product_attribute_values(*)")
+      .order("ordem", { ascending: true })
+      .order("id", { ascending: true })
+      .range(start, start + 999);
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as AttributeRow[]));
+    if (!data || data.length < 1000) break;
+  }
+  return rows.map(mapAttributeRow);
+}
+
+export async function fetchProductSelectedAttributes(
+  productId: string,
+): Promise<ProductAttribute[]> {
+  const { data, error } = await supabase.rpc("product_selected_attributes", {
+    p_product_id: productId,
+  });
+  if (error)
+    throw new Error(
+      "Não foi possível recuperar os filtros salvos. Confira se o SQL de atualização do catálogo foi aplicado.",
+    );
+  return ((data ?? []) as AttributeRow[]).map(mapAttributeRow);
 }
 
 export async function createAttribute(input: {
   nome: string;
   selecao: AttributeSelectionMode;
+  categoryId: string;
 }): Promise<OpResult> {
   const { error } = await supabase.from("product_attributes").insert({
     nome: input.nome,
     slug: slugify(input.nome),
     selecao: input.selecao,
+    category_id: input.categoryId,
   });
+  return { ok: !error, error: error?.message };
+}
+
+export async function customizeCategoryAttributes(
+  categoryId: string,
+): Promise<OpResult> {
+  const { error } = await supabase.rpc("customize_category_attributes", {
+    p_category_id: categoryId,
+  });
+  return { ok: !error, error: error?.message };
+}
+export async function setAttributeValueDescription(
+  id: string,
+  descricao: string,
+): Promise<OpResult> {
+  const { error } = await supabase
+    .from("product_attribute_values")
+    .update({ descricao })
+    .eq("id", id);
   return { ok: !error, error: error?.message };
 }
 
@@ -221,10 +276,12 @@ export async function deleteAttribute(id: string): Promise<OpResult> {
 export async function createAttributeValue(
   attributeId: string,
   valor: string,
+  descricao = "",
 ): Promise<OpResult> {
   const { error } = await supabase.from("product_attribute_values").insert({
     attribute_id: attributeId,
     valor,
+    descricao,
   });
   return { ok: !error, error: error?.message };
 }

@@ -15,6 +15,7 @@ import {
   calculatePricing,
   emptyPricing,
   OPENAI_MODEL,
+  MAX_ANALYSIS_IMAGES,
   validatePricing,
   type AgentKind,
 } from "../_shared/domain.ts";
@@ -25,7 +26,7 @@ export async function handler(req: Request): Promise<Response> {
     if (req.method === "OPTIONS")
       return new Response(null, { headers: cors(req) });
     const { userId, db } = await authenticate(req);
-    const body = await readBody(req, 8000000);
+    const body = await readBody(req, 15000000);
     const kind = body.kind as AgentKind;
     if (!Object.hasOwn(agentLabels, kind))
       throw new HttpError(400, "Agente inválido.");
@@ -90,7 +91,7 @@ export async function handler(req: Request): Promise<Response> {
       images =
         kind === "conteudo" && Array.isArray(body.images) ? body.images : [];
       if (
-        images.length > 7 ||
+        images.length > MAX_ANALYSIS_IMAGES ||
         images.some(
           (x) =>
             typeof x !== "string" ||

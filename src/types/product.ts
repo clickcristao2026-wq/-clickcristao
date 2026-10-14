@@ -10,6 +10,7 @@ export interface ProductCategory {
   slug: string;
   ordem: number;
   ativo: boolean;
+  attributesConfigured?: boolean;
 }
 
 export type AttributeSelectionMode = "unica" | "multipla";
@@ -20,6 +21,7 @@ export interface ProductAttributeValue {
   valor: string;
   ordem: number;
   ativo: boolean;
+  descricao?: string;
 }
 
 export interface ProductAttribute {
@@ -29,6 +31,7 @@ export interface ProductAttribute {
   selecao: AttributeSelectionMode;
   ordem: number;
   ativo: boolean;
+  categoryId?: string | null;
   valores: ProductAttributeValue[];
 }
 
@@ -42,6 +45,7 @@ export interface ProductEvaluation {
   links: string[];
 }
 export interface ProductDetails {
+  marca: string;
   conteudoAnuncio: string;
   nomeLoja: string;
   qualidade: string;

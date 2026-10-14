@@ -45,7 +45,7 @@ const Login = () => {
       >
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground italic">
-            Click Cristão <span className="text-2xl not-italic font-normal text-primary-foreground/70">– Área de Login</span>
+            Click Cristão
           </h1>
           <p className="text-primary-foreground/80 mt-2">
             Home / <span className="font-medium">Login</span>
@@ -57,7 +57,9 @@ const Login = () => {
         <div className="max-w-md mx-auto space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <h2 className="text-xl font-bold text-foreground text-center mb-2">Entrar na minha conta</h2>
+              <h2 className="text-xl font-bold text-foreground text-center mb-2">
+                Entrar na minha conta
+              </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -87,7 +89,9 @@ const Login = () => {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-destructive font-medium">{error}</p>
+                  <p className="text-sm text-destructive font-medium">
+                    {error}
+                  </p>
                 )}
 
                 <Button
@@ -102,7 +106,11 @@ const Login = () => {
 
               <p className="text-center text-sm text-muted-foreground pt-2">
                 Ainda não tem conta?{" "}
-                <Link to="/cadastro" className="font-medium underline" style={{ color: "#0A20E7" }}>
+                <Link
+                  to="/cadastro"
+                  className="font-medium underline"
+                  style={{ color: "#0A20E7" }}
+                >
                   Cadastre-se
                 </Link>
               </p>
@@ -111,11 +119,15 @@ const Login = () => {
 
           <Card className="border-dashed">
             <CardContent className="pt-6">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Ainda não tem uma conta admin?</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">
+                Ainda não tem uma conta admin?
+              </h3>
               <p className="text-xs text-muted-foreground">
-                Contas administrativas (acesso a todos os painéis internos) são criadas por outro admin em{" "}
-                <span className="font-mono">RH → Cadastro de Cooperador</span>. A primeira conta admin precisa ser
-                promovida direto no banco — veja a coluna <span className="font-mono">role</span> na tabela{" "}
+                Contas administrativas (acesso a todos os painéis internos) são
+                criadas por outro admin em{" "}
+                <span className="font-mono">RH → Cadastro de Cooperador</span>.
+                A primeira conta admin precisa ser promovida direto no banco —
+                veja a coluna <span className="font-mono">role</span> na tabela{" "}
                 <span className="font-mono">profiles</span> no Supabase.
               </p>
             </CardContent>

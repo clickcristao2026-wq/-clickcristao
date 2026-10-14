@@ -120,10 +120,12 @@ export function CalculatedField({
   label,
   value,
   color,
+  percentage = false,
 }: {
   label: string;
   value: number;
   color?: "blue" | "green";
+  percentage?: boolean;
 }) {
   return (
     <div>
@@ -131,7 +133,11 @@ export function CalculatedField({
       <output
         className={`mt-1 flex h-10 items-center rounded-md border px-3 font-semibold ${color === "blue" ? "border-blue-200 bg-blue-50 text-[#0A20E7]" : color === "green" ? "border-green-200 bg-green-50 text-green-700" : "bg-muted"}`}
       >
-        {Number.isFinite(value) ? formatBRL(value) : "—"}
+        {Number.isFinite(value)
+          ? percentage
+            ? `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
+            : formatBRL(value)
+          : "—"}
       </output>
     </div>
   );

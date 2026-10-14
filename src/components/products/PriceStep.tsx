@@ -60,6 +60,12 @@ export function PriceStep({
             onChange={(v) => update("margem", v)}
             placeholder="33,70"
           />
+          <CalculatedField label="Valor do Produto" value={s.base} />
+          <CalculatedField
+            label="Percentual de Lucro"
+            value={s.percentualLucro ?? NaN}
+            percentage
+          />
           <CalculatedField
             label="Custo da Plataforma (3%)"
             value={s.custoPlataforma}
@@ -73,7 +79,8 @@ export function PriceStep({
         </div>
         <p className="text-xs text-muted-foreground">
           Custo da plataforma = (custo + margem) × 3%. Preço sugerido = custo +
-          margem − custo da plataforma.
+          margem + custo da plataforma. Percentual de lucro = margem ÷ custo ×
+          100.
         </p>
         <Button
           type="button"
@@ -161,85 +168,94 @@ export function PriceStep({
         onApplyPrice={apply}
       />
       <ProductSection title="BENEFÍCIOS DO ANÚNCIO">
-        <div className="space-y-5">{benefits}</div>
-      </ProductSection>
-      <ProductSection title="VALOR DO CUPOM">
-        <label className="flex gap-2 items-center cursor-pointer">
-          <Checkbox
-            checked={p.cupomAtivo}
-            onCheckedChange={(v) => update("cupomAtivo", v === true)}
-          />
-          Ativar cupom
-        </label>
-        {p.cupomAtivo && (
-          <div className="grid sm:grid-cols-2 gap-4">
-            <TextField
-              label="Nome do Cupom"
-              value={p.cupomNome}
-              onChange={(v) => update("cupomNome", v)}
-            />
-            <PriceField
-              label="Percentual de Desconto"
-              value={p.cupomPercentual}
-              onChange={(v) => update("cupomPercentual", v)}
-              percentage
-            />
+        <div className="space-y-4 rounded-xl bg-slate-100 p-3 sm:p-4">
+          <div className="space-y-4">{benefits}</div>
+          <div className="rounded-xl border bg-white p-4 sm:p-5">
+            <ProductSection title="VALOR DO CUPOM">
+              <label className="flex gap-2 items-center cursor-pointer">
+                <Checkbox
+                  checked={p.cupomAtivo}
+                  onCheckedChange={(v) => update("cupomAtivo", v === true)}
+                />
+                Ativar cupom
+              </label>
+              {p.cupomAtivo && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <TextField
+                    label="Nome do Cupom"
+                    value={p.cupomNome}
+                    onChange={(v) => update("cupomNome", v)}
+                  />
+                  <PriceField
+                    label="Percentual de Desconto"
+                    value={p.cupomPercentual}
+                    onChange={(v) => update("cupomPercentual", v)}
+                    percentage
+                  />
+                </div>
+              )}
+            </ProductSection>
           </div>
-        )}
-      </ProductSection>
-      <ProductSection title="VALOR DO FRETE">
-        <label className="flex gap-2 items-center cursor-pointer">
-          <Checkbox
-            checked={p.freteAtivo}
-            onCheckedChange={(v) => update("freteAtivo", v === true)}
-          />
-          Incluir custo do frete
-        </label>
-        {p.freteAtivo && (
-          <>
-            <PriceField
-              label="Custo do Frete"
-              value={p.freteCusto}
-              onChange={(v) => update("freteCusto", v)}
-            />
-            <label className="flex gap-2 items-center cursor-pointer">
-              <Checkbox
-                checked={p.freteGratis}
-                onCheckedChange={(v) => update("freteGratis", v === true)}
-              />
-              Frete Grátis para o comprador
-            </label>
-            <p className="text-xs text-muted-foreground">
-              O custo informado é suportado pelo vendedor e entra no cálculo do
-              lucro, inclusive com frete grátis.
-            </p>
-          </>
-        )}
-      </ProductSection>
-      <ProductSection title="VALOR PRODUTO AFILIADO">
-        <label className="flex gap-2 items-center cursor-pointer">
-          <Checkbox
-            checked={p.afiliadoAtivo}
-            onCheckedChange={(v) => update("afiliadoAtivo", v === true)}
-          />
-          Ativar produto afiliado
-        </label>
-        {p.afiliadoAtivo && (
-          <div className="grid sm:grid-cols-2 gap-4">
-            <CalculatedField label="Preço do Produto" value={s.preco} />
-            <CalculatedField
-              label="Valor do Afiliado (5%)"
-              value={s.afiliado}
-              color="blue"
-            />
+          <div className="rounded-xl border bg-white p-4 sm:p-5">
+            <ProductSection title="VALOR DO FRETE">
+              <label className="flex gap-2 items-center cursor-pointer">
+                <Checkbox
+                  checked={p.freteAtivo}
+                  onCheckedChange={(v) => update("freteAtivo", v === true)}
+                />
+                Incluir custo do frete
+              </label>
+              {p.freteAtivo && (
+                <>
+                  <PriceField
+                    label="Custo do Frete"
+                    value={p.freteCusto}
+                    onChange={(v) => update("freteCusto", v)}
+                  />
+                  <label className="flex gap-2 items-center cursor-pointer">
+                    <Checkbox
+                      checked={p.freteGratis}
+                      onCheckedChange={(v) => update("freteGratis", v === true)}
+                    />
+                    Frete Grátis para o comprador
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    O custo informado é suportado pelo vendedor e entra no
+                    cálculo do lucro, inclusive com frete grátis.
+                  </p>
+                </>
+              )}
+            </ProductSection>
           </div>
-        )}
+          <div className="rounded-xl border bg-white p-4 sm:p-5">
+            <ProductSection title="VALOR PRODUTO AFILIADO">
+              <label className="flex gap-2 items-center cursor-pointer">
+                <Checkbox
+                  checked={p.afiliadoAtivo}
+                  onCheckedChange={(v) => update("afiliadoAtivo", v === true)}
+                />
+                Ativar produto afiliado
+              </label>
+              {p.afiliadoAtivo && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <CalculatedField label="Preço do Produto" value={s.preco} />
+                  <CalculatedField
+                    label="Valor do Afiliado (5%)"
+                    value={s.afiliado}
+                    color="blue"
+                  />
+                </div>
+              )}
+            </ProductSection>
+          </div>
+        </div>
       </ProductSection>
       <ProductSection title="RESUMO DE PRECIFICAÇÃO">
         <div className="rounded-xl border p-5 space-y-3">
           {(
             [
               ["Preço do Produto", s.preco],
+              ["Custo da plataforma (3%)", s.taxaVenda],
               ["Valor do Cupom", s.cupom],
               ["Valor do Frete", s.frete],
               ["Valor Afiliado", s.afiliado],
@@ -250,7 +266,7 @@ export function PriceStep({
               <strong>{Number.isFinite(value) ? formatBRL(value) : "—"}</strong>
             </div>
           ))}
-          <div className="flex justify-between border-t pt-3">
+          <div className="flex justify-between rounded-lg border-t bg-blue-50 p-3 text-[#0A20E7]">
             <strong>Faturamento líquido</strong>
             <strong>
               {Number.isFinite(s.faturamentoLiquido)
@@ -268,11 +284,19 @@ export function PriceStep({
                 : "—"}
             </strong>
           </div>
+          <div className="flex justify-between rounded-lg border-t bg-blue-50 p-3 text-[#0A20E7]">
+            <strong>Valor a receber</strong>
+            <strong>
+              {Number.isFinite(s.valorReceber)
+                ? formatBRL(s.valorReceber)
+                : "—"}
+            </strong>
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Faturamento líquido = preço − cupom − frete − afiliado. Lucro líquido
-          = faturamento líquido − custo do produto. A taxa de 3% está
-          considerada no preço sugerido.
+          Faturamento líquido = preço − custo da plataforma (3%) − cupom − frete
+          − afiliado. Lucro líquido = faturamento líquido − custo do produto.
+          Valor a receber = faturamento líquido.
         </p>
         {s.lucroLiquido < 0 && (
           <p role="alert" className="text-sm text-destructive">

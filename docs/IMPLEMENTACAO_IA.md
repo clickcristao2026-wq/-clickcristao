@@ -8,7 +8,7 @@ Implementação local em 05/10/2026. Projeto identificado: `xqmvlozonwudwewjlpfe
 - Conteúdo do anúncio, nome da loja, qualidade, seção Premium/Intermediário/Popular, avaliações autodeclaradas e links de comprovação.
 - Filtros existentes mantidos; os benefícios comerciais passaram para a etapa de preço.
 - Precificação normal ou promoção, cupom percentual, custo de frete, frete grátis, afiliado de 5%, faturamento e lucro líquido.
-- Dois destaques, três fotos de galeria, duas imagens no corpo e um vídeo MP4/WebM. Rascunhos permitem mídias incompletas; publicar exige os oito arquivos.
+- Dois destaques, de uma a dez fotos de galeria, duas imagens no corpo e um vídeo MP4/WebM. Rascunhos permitem mídias incompletas.
 - Menu administrativo renomeado para “Categorias”, mantendo o gerenciamento de atributos.
 - Área “Inteligência Artificial” em todas as contas de usuários, com cadastro, validação, substituição e remoção da chave OpenAI.
 - Agentes de mercado, lucro, conteúdo, comparação, suporte e investigação, todos usando `gpt-6-luna`.
@@ -20,17 +20,20 @@ Os cálculos usam arredondamento por valor monetário para duas casas decimais.
 
 ```text
 Taxa da plataforma = (custo + margem desejada em R$) × 3%
-Preço sugerido = custo + margem − taxa da plataforma
+Preço sugerido = custo + margem + taxa da plataforma
+Percentual de lucro = margem / custo × 100
 Economia da promoção = preço original − preço promocional
 Cupom = preço ativo × percentual de desconto / 100
 Afiliado = preço ativo × 5%, quando ativado
-Faturamento líquido = preço ativo − cupom − custo de frete − afiliado
+Taxa efetiva da plataforma = preço ativo × 3%
+Faturamento líquido = preço ativo − taxa efetiva − cupom − custo de frete − afiliado
 Lucro líquido = faturamento líquido − custo do produto
+Valor a receber = faturamento líquido
 ```
 
-Exemplo: custo de R$ 84,00 e margem de R$ 33,70 resultam em taxa de R$ 3,53 e preço sugerido de R$ 114,17. O exemplo do briefing cita R$ 114,16, mas a fórmula descrita resulta em R$ 114,17. Também R$ 114,16 × 5% resulta em R$ 5,71, após arredondamento. O campo de cupom é percentual: 10% de R$ 114,16 equivale a R$ 11,42, e não R$ 10,00.
+Revisão de 14/10/2026: custo de R$ 84,00 e margem de R$ 40,00 resultam em base R$ 124,00, lucro de 47,62%, taxa estimada R$ 3,72 e preço sugerido R$ 127,72. A taxa do resumo é calculada sobre o preço efetivamente escolhido. O campo de cupom é percentual.
 
-A taxa de 3% segue a fórmula solicitada e não é descontada novamente do resumo. Isso é uma simulação de anúncio; não substitui regras de liquidação financeira. O frete informado representa o custo suportado pelo vendedor, inclusive quando ele oferece frete grátis ao comprador.
+A taxa de 3% é adicionada ao preço sugerido e descontada uma única vez no resumo de faturamento/recebimento. Isso é uma simulação de anúncio; não substitui regras de liquidação financeira. O frete informado representa o custo suportado pelo vendedor, inclusive quando ele oferece frete grátis ao comprador.
 
 ## Arquitetura e dados
 

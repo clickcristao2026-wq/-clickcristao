@@ -1,4 +1,5 @@
 export const OPENAI_MODEL = "gpt-6-luna";
+export const MAX_ANALYSIS_IMAGES = 14;
 export type AgentKind =
   | "mercado"
   | "lucro"
@@ -54,7 +55,9 @@ export function parseMoney(value: string): number {
 export function calculatePricing(p: ProductPricing) {
   const base = money(p.custo + p.margem);
   const custoPlataforma = money(base * 0.03);
-  const precoSugerido = money(base - custoPlataforma);
+  const precoSugerido = money(base + custoPlataforma);
+  const percentualLucro =
+    p.custo > 0 ? money((p.margem / p.custo) * 100) : null;
   const preco = money(
     p.modalidade === "promocao" ? p.precoPromocional : p.precoNormal,
   );
@@ -66,12 +69,18 @@ export function calculatePricing(p: ProductPricing) {
   // O custo de envio é suportado pelo vendedor mesmo quando o comprador recebe frete grátis.
   const frete = p.freteAtivo ? money(p.freteCusto) : 0;
   const afiliado = p.afiliadoAtivo ? money(preco * 0.05) : 0;
-  const faturamentoLiquido = money(preco - cupom - frete - afiliado);
+  const taxaVenda = money(preco * 0.03);
+  const faturamentoLiquido = money(
+    preco - taxaVenda - cupom - frete - afiliado,
+  );
   const lucroLiquido = money(faturamentoLiquido - p.custo);
   return {
     base,
     custoPlataforma,
     precoSugerido,
+    percentualLucro,
+    taxaVenda,
+    valorReceber: faturamentoLiquido,
     preco,
     economia,
     cupom,

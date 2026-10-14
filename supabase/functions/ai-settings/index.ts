@@ -57,14 +57,12 @@ export async function handler(req: Request): Promise<Response> {
     const key = apiKey.trim();
     const encrypted = await encryptKey(key, userId);
     await openaiFetch(`models/${OPENAI_MODEL}`, key);
-    const { error } = await db
-      .from("ai_credentials")
-      .upsert({
-        user_id: userId,
-        encrypted_key: encrypted,
-        key_suffix: key.slice(-4),
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await db.from("ai_credentials").upsert({
+      user_id: userId,
+      encrypted_key: encrypted,
+      key_suffix: key.slice(-4),
+      updated_at: new Date().toISOString(),
+    });
     if (error) throw new HttpError(500, "Não foi possível guardar a chave.");
     return json(req, {
       configured: true,

@@ -11,6 +11,7 @@ export type {
   AIRun,
 } from "../../supabase/functions/_shared/domain";
 import type { AgentKind, AIRun } from "../../supabase/functions/_shared/domain";
+import { MAX_ANALYSIS_IMAGES } from "../../supabase/functions/_shared/domain";
 
 export interface AISettings {
   configured: boolean;
@@ -128,5 +129,7 @@ export async function prepareAnalysisImages(
       return response.blob();
     }),
   );
-  return Promise.all([...blobs, ...files].slice(0, 7).map(imageDataUrl));
+  return Promise.all(
+    [...blobs, ...files].slice(0, MAX_ANALYSIS_IMAGES).map(imageDataUrl),
+  );
 }

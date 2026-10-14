@@ -10,6 +10,7 @@ export function defaultDetails(): ProductDetails {
   return {
     conteudoAnuncio: "",
     nomeLoja: "",
+    marca: "",
     qualidade: "",
     secao: "",
     avaliacao: {
@@ -40,7 +41,7 @@ export function normalizeDetails(
 }
 export const mediaLimits: Record<MediaRole, number> = {
   destaque: 2,
-  galeria: 3,
+  galeria: 10,
   corpo: 2,
   video: 1,
 };
@@ -74,8 +75,11 @@ export function validateMediaCount(
       uploads.filter((x) => x.papel === role).length;
     if (count > mediaLimits[role])
       return `${mediaLabels[role]}: o limite é ${mediaLimits[role]} arquivo(s).`;
-    if (publish && count !== mediaLimits[role])
-      return `Para publicar, selecione ${mediaLimits[role]} arquivo(s) em ${mediaLabels[role].toLowerCase()}. Você pode salvar um rascunho enquanto prepara as mídias.`;
+    if (
+      publish &&
+      (role === "galeria" ? count < 1 : count !== mediaLimits[role])
+    )
+      return `Para publicar, selecione ${role === "galeria" ? "de 1 a 10" : mediaLimits[role]} arquivo(s) em ${mediaLabels[role].toLowerCase()}. Você pode salvar um rascunho enquanto prepara as mídias.`;
   }
   return null;
 }
@@ -83,7 +87,7 @@ export function validateEvaluation(details: ProductDetails): string | null {
   const e = details.avaliacao;
   if (
     [e.produtoEstrelas, e.atendimentoEstrelas].some(
-    (x) => !Number.isFinite(x) || x < 0 || x > 5,
+      (x) => !Number.isFinite(x) || x < 0 || x > 5,
     )
   )
     return "As avaliações devem estar entre 0 e 5 estrelas.";

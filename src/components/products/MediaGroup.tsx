@@ -53,7 +53,7 @@ export function MediaGroup({
     role === "destaque"
       ? "Selecione duas fotos para a apresentação inicial do produto nas prateleiras."
       : role === "galeria"
-        ? "Escolha três imagens que apresentem as características do produto."
+        ? "Escolha até dez imagens que apresentem as características e as variações de cores do produto."
         : role === "corpo"
           ? "Separe duas imagens adicionais para integrar ao conteúdo do anúncio."
           : "Selecione um vídeo profissional referente ao produto.";

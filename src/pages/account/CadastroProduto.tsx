@@ -5,7 +5,6 @@ import { AccountLayout } from "@/components/AccountLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -21,6 +20,7 @@ import {
   fetchAttributes,
   fetchCategoryTree,
   fetchProductById,
+  fetchProductSelectedAttributes,
   updateProduct,
   slugify,
 } from "@/lib/products";
@@ -54,6 +54,8 @@ import {
 } from "@/components/products/FormFields";
 import { MediaGroup } from "@/components/products/MediaGroup";
 import { PriceStep } from "@/components/products/PriceStep";
+import { AttributeSelectionCard } from "@/components/products/AttributeSelectionCard";
+import { attributesForCategory, reconcileAttributeValues } from "@/lib/catalog";
 
 const initialForm = {
   nome: "",
@@ -69,27 +71,6 @@ const initialForm = {
   status: "publicado" as ProductStatus,
 };
 const steps = ["Informação", "Preço", "Imagem"];
-const sections = [
-  {
-    value: "premium",
-    title: "Premium",
-    description:
-      "Produto de luxo, com excelente qualidade e durabilidade, marca de credibilidade e acabamento refinado. O preço deve representar a qualidade e o valor do produto.",
-  },
-  {
-    value: "intermediario",
-    title: "Intermediário",
-    description:
-      "Bom produto, que atende aos padrões e às necessidades dos consumidores. Possui qualidade confiável, segurança, bom acabamento e valor compatível para comercialização.",
-  },
-  {
-    value: "popular",
-    title: "Popular",
-    description:
-      "Produto acessível para consumidores com menor exigência de qualidade e durabilidade. Considere o acabamento, a estética de fabricação e a durabilidade limitada.",
-  },
-] as const;
-
 const CadastroProduto = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -139,6 +120,17 @@ const CadastroProduto = () => {
             setNotFound(true);
             return;
           }
+          const savedAttributes = await fetchProductSelectedAttributes(
+            product.id,
+          );
+          if (!active) return;
+          const editingAttributes = [
+            ...attrs.filter(
+              (a) => !savedAttributes.some((saved) => saved.id === a.id),
+            ),
+            ...savedAttributes,
+          ];
+          setAttributes(editingAttributes);
           const newForm = { ...initialForm };
           for (const key of Object.keys(initialForm) as Array<
             keyof typeof initialForm
@@ -148,7 +140,18 @@ const CadastroProduto = () => {
           }
           setForm(newForm);
           setDetails(product.detalhes);
-          setSelectedValues(new Set(product.atributoValorIds));
+          const applicable = attributesForCategory(
+            cats,
+            editingAttributes,
+            product.categoriaId ?? "",
+          );
+          setSelectedValues(
+            reconcileAttributeValues(
+              editingAttributes,
+              applicable,
+              new Set(product.atributoValorIds),
+            ),
+          );
           setExisting(product.midias);
           setRemoved([]);
           setUploads([]);
@@ -160,20 +163,19 @@ const CadastroProduto = () => {
             category = map.get(category.parentId ?? "");
           }
           setCategoryIds(ids);
-          const section = attrs.find((a) => a.slug === "secao");
-          const value = section?.valores.find((v) =>
-            product.atributoValorIds.includes(v.id),
-          );
-          if (!product.detalhes.secao && value)
-            setDetails((prev) => ({
-              ...prev,
-              secao: slugify(value.valor) as ProductDetails["secao"],
-            }));
+          const legacyBrand = editingAttributes
+            .filter((a) => a.slug === "marca")
+            .flatMap((a) => a.valores)
+            .find((v) => product.atributoValorIds.includes(v.id));
+          if (!product.detalhes.marca && legacyBrand)
+            setDetails((prev) => ({ ...prev, marca: legacyBrand.valor }));
         }
-      } catch {
+      } catch (error) {
         if (active)
           setLoadError(
-            "Não foi possível carregar os dados do produto. Tente novamente.",
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar os dados do produto. Tente novamente.",
           );
       } finally {
         if (active) setLoading(false);
@@ -185,6 +187,11 @@ const CadastroProduto = () => {
     };
   }, [productId, user?.id]);
   const leafId = [...categoryIds].reverse().find(Boolean) ?? "";
+  const applicableAttributes = attributesForCategory(
+    categorias,
+    attributes,
+    leafId,
+  );
   const pricing = details.precificacao;
   const summary = calculatePricing(pricing);
   const visibleMedia = existing.filter(
@@ -222,68 +229,21 @@ const CadastroProduto = () => {
       else next.add(id);
       return next;
     });
-  const setSection = (value: ProductDetails["secao"]) => {
-    updateDetail("secao", value);
-    const attr = attributes.find((a) => a.slug === "secao");
-    const option = attr?.valores.find((v) => slugify(v.valor) === value);
-    if (attr && option) toggleValue(attr, option.id);
-  };
   const renderAttributes = (benefits: boolean) =>
-    attributes
+    applicableAttributes
       .filter(
         (a) =>
-          a.slug !== "secao" &&
           (a.slug === "beneficios") === benefits &&
           (a.ativo || a.valores.some((v) => selectedValues.has(v.id))),
       )
-      .map((attr) => {
-        const values = attr.valores.filter(
-          (v) => v.ativo || selectedValues.has(v.id),
-        );
-        return (
-          <div key={attr.id} className="space-y-2">
-            <Label className="font-medium">{attr.nome}</Label>
-            {!values.length ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhuma opção cadastrada.
-              </p>
-            ) : attr.selecao === "unica" ? (
-              <Select
-                value={values.find((v) => selectedValues.has(v.id))?.id ?? ""}
-                onValueChange={(v) => toggleValue(attr, v)}
-              >
-                <SelectTrigger aria-label={attr.nome}>
-                  <SelectValue
-                    placeholder={`Selecione ${attr.nome.toLowerCase()}`}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {values.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.valor}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {values.map((v) => (
-                  <label
-                    key={v.id}
-                    className="flex gap-2 items-center text-sm cursor-pointer"
-                  >
-                    <Checkbox
-                      checked={selectedValues.has(v.id)}
-                      onCheckedChange={() => toggleValue(attr, v.id)}
-                    />
-                    {v.valor}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      });
+      .map((attr) => (
+        <AttributeSelectionCard
+          key={attr.id}
+          attribute={attr}
+          selected={selectedValues}
+          onSelect={(id) => toggleValue(attr, id)}
+        />
+      ));
   const infoError = () =>
     !form.nome.trim()
       ? "Informe o nome do produto."
@@ -336,16 +296,21 @@ const CadastroProduto = () => {
     if (error) throw new Error(error);
     return {
       ...form,
+      marca: details.marca,
       conteudoAnuncio: details.conteudoAnuncio,
       nomeLoja: details.nomeLoja,
       qualidade: details.qualidade,
-      secao: details.secao,
+      secao: slugify(
+        applicableAttributes
+          .find((a) => a.slug === "secao")
+          ?.valores.find((v) => selectedValues.has(v.id))?.valor ?? "",
+      ),
       avaliacaoAutodeclarada: details.avaliacao,
       precificacao: pricing,
       classificacao: categoryIds
         .map((id) => categorias.find((c) => c.id === id)?.nome)
         .filter(Boolean),
-      filtros: attributes
+      filtros: applicableAttributes
         .map((a) => ({
           nome: a.nome,
           valores: a.valores
@@ -381,7 +346,14 @@ const CadastroProduto = () => {
         nome: form.nome.trim(),
         categoriaId: leafId,
         preco: summary.preco,
-        detalhes: details,
+        detalhes: {
+          ...details,
+          secao: slugify(
+            applicableAttributes
+              .find((a) => a.slug === "secao")
+              ?.valores.find((v) => selectedValues.has(v.id))?.valor ?? "",
+          ) as ProductDetails["secao"],
+        },
         atributoValorIds: Array.from(selectedValues),
         imagens: uploads,
       };
@@ -518,13 +490,14 @@ const CadastroProduto = () => {
                           <Label className="font-normal">{label}</Label>
                           <Select
                             value={categoryIds[level]}
-                            onValueChange={(value) =>
+                            onValueChange={(value) => {
+                              setSelectedValues(new Set());
                               setCategoryIds((prev) =>
                                 prev.map((id, i) =>
                                   i === level ? value : i > level ? "" : id,
                                 ),
-                              )
-                            }
+                              );
+                            }}
                             disabled={
                               (level > 0 && !categoryIds[level - 1]) ||
                               !options.length
@@ -566,6 +539,12 @@ const CadastroProduto = () => {
                   label="Modelo do Produto"
                   value={form.modelo}
                   onChange={(v) => update("modelo", v)}
+                />
+                <TextField
+                  label="Marca do produto"
+                  value={details.marca}
+                  onChange={(v) => updateDetail("marca", v)}
+                  placeholder="Informe a marca do produto"
                 />
                 <TextField
                   label="Conteúdo do Anunciado"
@@ -624,18 +603,6 @@ const CadastroProduto = () => {
                   multiline
                   placeholder="Após o uso, deixar um período para arejar, permitindo que o tecido respire."
                 />
-                <TextField
-                  label="Curiosidade do produto"
-                  value={form.curiosidade}
-                  onChange={(v) => update("curiosidade", v)}
-                  multiline
-                />
-                <TextField
-                  label="Garantia e satisfação"
-                  value={form.garantiaSatisfacao}
-                  onChange={(v) => update("garantiaSatisfacao", v)}
-                  multiline
-                />
               </ProductSection>
               <ProductSection title="GESTÃO DE ESTOQUE">
                 <TextField
@@ -643,34 +610,6 @@ const CadastroProduto = () => {
                   value={form.sku}
                   onChange={(v) => update("sku", v)}
                 />
-              </ProductSection>
-              <ProductSection title="SEÇÃO DO PRODUTO">
-                <RadioGroup
-                  aria-label="Seção do produto"
-                  value={details.secao}
-                  onValueChange={(v) =>
-                    setSection(v as ProductDetails["secao"])
-                  }
-                  className="space-y-3"
-                >
-                  {sections.map((section) => (
-                    <label
-                      key={section.value}
-                      className="flex gap-3 cursor-pointer rounded-lg border p-4 has-[[data-state=checked]]:border-blue-600 has-[[data-state=checked]]:bg-blue-50/50"
-                    >
-                      <RadioGroupItem
-                        value={section.value}
-                        className="mt-1 shrink-0"
-                      />
-                      <span>
-                        <strong className="block mb-1">{section.title}</strong>
-                        <span className="text-sm text-muted-foreground">
-                          {section.description}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </RadioGroup>
               </ProductSection>
               <ProductSection title="DADOS DE AVALIAÇÃO">
                 <p className="text-sm text-muted-foreground">
@@ -784,7 +723,7 @@ const CadastroProduto = () => {
                 </p>
               </ProductSection>
               <ProductSection title="FILTROS DO PRODUTO">
-                <div className="grid sm:grid-cols-2 gap-5">
+                <div className="rounded-xl bg-slate-100 p-3 sm:p-4 space-y-4">
                   {renderAttributes(false)}
                 </div>
               </ProductSection>
@@ -849,8 +788,9 @@ const CadastroProduto = () => {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  A publicação requer as 7 imagens e o vídeo. Salve como
-                  rascunho para completar as mídias depois.
+                  A publicação requer 2 imagens destacadas, de 1 a 10 na
+                  galeria, 2 no corpo e 1 vídeo. Salve como rascunho para
+                  completar as mídias depois.
                 </p>
               </ProductSection>
             </>

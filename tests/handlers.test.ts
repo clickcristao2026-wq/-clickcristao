@@ -212,7 +212,7 @@ describe("funções autenticadas de IA", () => {
     const data = JSON.parse(
       mocks.api.mock.calls[0][2].input[0].content[0].text,
     );
-    expect(data.dados.resumoFinanceiro.lucroLiquido).toBe(58.5);
+    expect(data.dados.resumoFinanceiro.lucroLiquido).toBe(54);
   });
   it("não chama a OpenAI quando o limite foi atingido ou a chave está ausente", async () => {
     mocks.rpc.mockResolvedValue({ data: false, error: null });

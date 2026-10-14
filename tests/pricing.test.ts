@@ -20,7 +20,15 @@ describe("precificação", () => {
       margem: 33.7,
     });
     expect(result.custoPlataforma).toBe(3.53);
-    expect(result.precoSugerido).toBe(114.17);
+    expect(result.precoSugerido).toBe(121.23);
+    expect(
+      calculatePricing({ ...emptyPricing, custo: 84, margem: 40 }),
+    ).toMatchObject({
+      base: 124,
+      percentualLucro: 47.62,
+      custoPlataforma: 3.72,
+      precoSugerido: 127.72,
+    });
   });
   it("calcula cupom percentual, frete e afiliado sem duplicar a taxa", () => {
     const result = calculatePricing({
@@ -38,8 +46,10 @@ describe("precificação", () => {
     expect(result.cupom).toBe(11.42);
     expect(result.afiliado).toBe(5.71);
     expect(result.frete).toBe(7);
-    expect(result.faturamentoLiquido).toBe(90.03);
-    expect(result.lucroLiquido).toBe(6.03);
+    expect(result.taxaVenda).toBe(3.42);
+    expect(result.faturamentoLiquido).toBe(86.61);
+    expect(result.lucroLiquido).toBe(2.61);
+    expect(result.valorReceber).toBe(result.faturamentoLiquido);
   });
   it("usa exclusivamente a promoção para preço, economia e comissão", () => {
     const p = {
@@ -69,7 +79,7 @@ describe("precificação", () => {
       cupom: 0,
       frete: 0,
       afiliado: 0,
-      lucroLiquido: -100,
+      lucroLiquido: -103,
     });
   });
   it("aceita moeda brasileira e rejeita valores inválidos", () => {

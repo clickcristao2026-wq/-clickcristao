@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   toast: vi.fn(),
   attach: vi.fn(),
+  selectedAttributes: vi.fn(),
 }));
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "seller-a", role: "vendedor" } }),
@@ -29,6 +30,21 @@ vi.mock("@/lib/products", () => ({
   ],
   fetchAttributes: async () => [
     {
+      id: "section",
+      slug: "secao",
+      nome: "Seção",
+      selecao: "unica",
+      ativo: true,
+      valores: [
+        {
+          id: "premium",
+          valor: "Premium",
+          ativo: true,
+          descricao: "Produto de luxo com durabilidade.",
+        },
+      ],
+    },
+    {
       id: "benefits",
       slug: "beneficios",
       nome: "Benefícios",
@@ -40,6 +56,7 @@ vi.mock("@/lib/products", () => ({
   createProduct: mocks.create,
   updateProduct: mocks.update,
   fetchProductById: mocks.fetch,
+  fetchProductSelectedAttributes: mocks.selectedAttributes,
   slugify: (text: string) => text.toLowerCase(),
 }));
 vi.mock("@/lib/ai", () => ({
@@ -74,8 +91,65 @@ beforeEach(() => {
   mocks.create.mockResolvedValue({ ok: true, productId: "new-product" });
   mocks.update.mockResolvedValue({ ok: true });
   mocks.attach.mockResolvedValue(undefined);
+  mocks.selectedAttributes.mockResolvedValue([]);
 });
 describe("cadastro em três etapas", () => {
+  it("preserva marca e cor antigas desativadas durante a edição", async () => {
+    const details = defaultDetails();
+    details.precificacao.precoNormal = 100;
+    mocks.fetch.mockResolvedValue({
+      id: "p1",
+      sellerId: "seller-a",
+      categoriaId: "cat",
+      nome: "Antigo",
+      preco: 100,
+      status: "rascunho",
+      detalhes: details,
+      atributoValorIds: ["brand-old", "color-old"],
+      midias: [],
+      curiosidade: "Texto antigo",
+      garantiaSatisfacao: "Garantia antiga",
+    });
+    mocks.selectedAttributes.mockResolvedValue([
+      {
+        id: "brand-attr",
+        slug: "marca",
+        nome: "Marca",
+        categoryId: null,
+        valores: [{ id: "brand-old", valor: "Polo", ativo: false }],
+      },
+      {
+        id: "color-attr",
+        slug: "cor",
+        nome: "Cor",
+        selecao: "multipla",
+        ativo: true,
+        categoryId: null,
+        valores: [{ id: "color-old", valor: "Azul", ativo: false }],
+      },
+    ]);
+    const user = userEvent.setup();
+    mount("/produtos/p1/editar");
+    expect(
+      ((await screen.findByLabelText("Marca do produto")) as HTMLInputElement)
+        .value,
+    ).toBe("Polo");
+    expect(
+      screen
+        .getByRole("checkbox", { name: "Azul" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    await user.click(screen.getByRole("button", { name: /PRÓXIMA ETAPA/ }));
+    await user.click(screen.getByRole("button", { name: /PRÓXIMA ETAPA/ }));
+    await user.click(screen.getByRole("button", { name: "SALVAR REGISTRO" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce());
+    expect(mocks.update.mock.calls[0][2]).toMatchObject({
+      curiosidade: "Texto antigo",
+      garantiaSatisfacao: "Garantia antiga",
+      atributoValorIds: ["color-old"],
+      detalhes: { marca: "Polo" },
+    });
+  });
   it("preserva dados ao voltar, calcula preços e salva rascunho com todos os campos", async () => {
     const user = userEvent.setup();
     mount();
@@ -87,6 +161,9 @@ describe("cadastro em três etapas", () => {
       screen.getByLabelText("Conteúdo do Anunciado"),
       "Elegância para o frio",
     );
+    expect(screen.queryByLabelText("Curiosidade do produto")).toBeNull();
+    expect(screen.queryByLabelText("Garantia e satisfação")).toBeNull();
+    await user.type(screen.getByLabelText("Marca do produto"), "Minha Marca");
     await choose(user, "Tipo *", "Produto");
     await choose(user, "Categoria *", "Moda");
     expect(screen.queryByText("Cupom")).toBeNull();
@@ -105,7 +182,7 @@ describe("cadastro em três etapas", () => {
     expect(
       (screen.getByLabelText("Preço do produto * (R$)") as HTMLInputElement)
         .value,
-    ).toBe("114,17");
+    ).toBe("121,23");
     await user.click(screen.getByRole("button", { name: "ETAPA ANTERIOR" }));
     expect(
       (screen.getByLabelText("Conteúdo do Anunciado") as HTMLTextAreaElement)
@@ -121,10 +198,11 @@ describe("cadastro em três etapas", () => {
     await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
     expect(mocks.create.mock.calls[0][1]).toMatchObject({
       nome: "Jaqueta de Couro",
-      preco: 114.17,
+      preco: 121.23,
       status: "rascunho",
       detalhes: {
         conteudoAnuncio: "Elegância para o frio",
+        marca: "Minha Marca",
         precificacao: { custo: 84, margem: 33.7 },
       },
       imagens: [{ papel: "destaque" }],
