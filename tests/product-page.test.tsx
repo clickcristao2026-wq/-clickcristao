@@ -12,6 +12,13 @@ function mount(data = demoProduct) {
 }
 
 describe("página pública do produto", () => {
+  it("navega até a última foto de uma galeria com doze imagens", async () => {
+    mount({ ...demoProduct, images: Array.from({ length: 12 }, (_, i) => `/foto-${i + 1}.jpg`) });
+    await userEvent.click(screen.getByRole("button", { name: "Ver foto 12", exact: true }));
+    expect(screen.getByRole("img", { name: "Sapatênis de Couro Marrom — foto 12" }).getAttribute("src")).toBe("/foto-12.jpg");
+    await userEvent.click(screen.getByRole("button", { name: "Próxima foto", exact: true }));
+    expect(screen.getByRole("img", { name: "Sapatênis de Couro Marrom — foto 1" })).toBeTruthy();
+  });
   it("limita recomendações ao final real do trilho", async () => {
     const view = render(<RelatedProducts product={demoProduct} onSelect={() => {}} />);
     const rail = view.container.querySelector(".pp-recommendation-rail") as HTMLElement;

@@ -313,6 +313,27 @@ describe.sequential("atributos específicos por produto", () => {
     expect(clonedBlue).toBeDefined(); expect(clonedBlue?.ativo).toBe(false);
     await db.query("select save_product_record($1,$2::jsonb,$3::uuid[])",[product,JSON.stringify({nome:"Legado Azul",preco:100,categoria_id:leafId,detalhes:{}}),[clonedBlue!.id]]);
   });
+  it("persiste o modelo público e complementares sem expor a precificação privada", async () => {
+    await asUser(seller);
+    const record = await db.query<{ id: string }>("select save_product_record(null,$1::jsonb,'{}'::uuid[]) as id", [JSON.stringify({
+      nome: "Anúncio com modelo público", preco: 200, categoria_id: top,
+      detalhes: { nomeLoja: "Loja real", paginaProduto: { complementares: [cropped] }, precificacao: { custo: 80, margem: 40, freteCusto: 15, afiliadoAtivo: true, freteAtivo: true, freteGratis: true, cupomAtivo: true, cupomNome: "CLIENTE", cupomPercentual: 10 } },
+    })]);
+    const id = record.rows[0].id;
+    for (const role of ["destaque", "destaque", "galeria", "corpo", "corpo", "video"]) {
+      await db.query("insert into product_images(product_id,url,papel) values($1,'https://example.com/media',$2)", [id, role]);
+    }
+    await db.query("update products set status='publicado' where id=$1", [id]);
+    await db.exec("reset role; set role anon;");
+    const result = await db.query<{ detalhes: { nomeLoja: string; paginaProduto: { complementares: string[] }; precificacao: Record<string, unknown> } }>("select detalhes from products where id=$1", [id]);
+    expect(result.rows[0].detalhes.nomeLoja).toBe("Loja real");
+    expect(result.rows[0].detalhes.paginaProduto.complementares).toEqual([cropped]);
+    expect(result.rows[0].detalhes.precificacao.afiliadoAtivo).toBe(true);
+    expect(result.rows[0].detalhes.precificacao.custo).toBeUndefined();
+    expect(result.rows[0].detalhes.precificacao.margem).toBeUndefined();
+    expect(result.rows[0].detalhes.precificacao.freteCusto).toBeUndefined();
+    await expect(db.query("select data from product_pricing where product_id=$1", [id])).rejects.toThrow("permission denied");
+  });
   it("permite repetir o SQL preservando os atributos e valores personalizados", async () => {
     await db.exec("reset role;");
     const before = (

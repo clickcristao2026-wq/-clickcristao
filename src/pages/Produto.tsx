@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Crown, Heart, ListFilter, Megaphone, Minus, Plus, Share2, ShoppingCart, Shuffle, Star, Store, Tag, TicketPercent, Truck, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { fetchPublishedProductById } from "@/lib/products";
+import { fetchProductForPreview, fetchPublishedProductById } from "@/lib/products";
+import { fetchProductPageContext } from "@/lib/product-page-context";
+import { productPath } from "@/lib/product-links";
+import { useAuth } from "@/contexts/AuthContext";
 import { ProductGallery, ProductPhoto } from "@/components/product-page/ProductGallery";
 import { ProductTabs } from "@/components/product-page/ProductTabs";
 import { RelatedProducts } from "@/components/product-page/RelatedProducts";
@@ -14,6 +17,7 @@ const conditionIcons = { leader: Crown, affiliate: Tag, shipping: Truck, coupon:
 type Panel = "cart" | "checkout" | "seller" | "filter" | "compare" | "report" | "share" | "item" | null;
 
 export function ProductPageView({ product }: { product: ProductPageData }) {
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [favorite, setFavorite] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -27,7 +31,10 @@ export function ProductPageView({ product }: { product: ProductPageData }) {
     return () => { document.title = previous; };
   }, [product.name]);
 
-  const selectItem = (selected: ProductCardData) => { setItem(selected); setPanel("item"); };
+  const selectItem = (selected: ProductCardData) => {
+    if (!product.demo) { navigate(productPath(selected.id)); return; }
+    setItem(selected); setPanel("item");
+  };
   const purchase = (next: "cart" | "checkout") => { if (purchasable) setPanel(next); };
   const share = async () => {
     try {
@@ -37,8 +44,9 @@ export function ProductPageView({ product }: { product: ProductPageData }) {
     } catch (error) { if (!(error instanceof DOMException && error.name === "AbortError")) setPanel("share"); }
   };
 
-  return <div className="product-page">
+  return <div className="product-page" data-demo={product.demo}>
     {product.demo && <aside className="pp-demo-note"><Link to="/" aria-label="Voltar ao Click Cristão"><ArrowLeft size={14} /> Click Cristão</Link><span>Prévia do layout · produtos, preços e condições ilustrativos</span></aside>}
+    {product.preview && <aside className="pp-demo-note"><Link to="/account/produtos"><ArrowLeft size={14} /> Meus produtos</Link><span>Pré-visualização privada · este anúncio ainda não está público</span></aside>}
     <main className="pp-container" id="product-content">
       <section className="pp-hero" aria-label="Apresentação do produto">
         <nav className="pp-breadcrumb" aria-label="Navegação estrutural"><Link to="/">Home</Link>{product.breadcrumbs.map(part => <span key={part}><span aria-hidden="true">/</span>{part}</span>)}<span className="pp-breadcrumb-current"><span aria-hidden="true">/</span>{product.name}</span></nav>
@@ -58,7 +66,7 @@ export function ProductPageView({ product }: { product: ProductPageData }) {
         <div className="pp-actions"><button type="button" onClick={() => setPanel("filter")}><ListFilter />Filtrar</button><button type="button" onClick={() => setPanel("compare")}><Shuffle />Comparar</button><button type="button" aria-pressed={favorite} onClick={() => { setFavorite(v => !v); setNotice(favorite ? "Produto removido dos favoritos desta visita." : "Produto favoritado nesta visita."); }}><Heart fill={favorite ? "currentColor" : "none"} />{favorite ? "Favoritado" : "Favoritar"}</button><button type="button" onClick={() => setPanel("report")}><Megaphone />Denunciar</button></div>
       </section>
 
-      <section className="pp-editorial" aria-label="Condições e descrição do produto"><div className="pp-editorial-copy">
+      <section className="pp-editorial" data-has-photos={product.editorial.length > 0} aria-label="Condições e descrição do produto"><div className="pp-editorial-copy">
         {!!product.conditions.length && <div className="pp-conditions"><h2>Condições do Produto</h2><ul>{product.conditions.map(condition => { const Icon = conditionIcons[condition.kind]; return <li key={condition.kind}><Icon />{condition.text}</li>; })}</ul></div>}
         <div className="pp-description"><h2>Descrição do produto</h2>{product.description.length ? product.description.map((text, i) => <p key={i}>{text}</p>) : <p>Descrição ainda não informada pelo vendedor.</p>}</div>
       </div><EditorialPhotos product={product} /></section>
@@ -88,11 +96,14 @@ function EditorialPhotos({ product }: { product: ProductPageData }) {
   return <div className="pp-editorial-photos">{product.editorial.map((src, i) => <ProductPhoto key={src} src={src} alt={`${product.name} — detalhe ${i + 1}`} />)}</div>;
 }
 
-export default function Produto() {
+export default function Produto({ preview = false }: { preview?: boolean }) {
   const { id } = useParams();
-  const query = useQuery({ queryKey: ["public-product", id], queryFn: () => fetchPublishedProductById(id!), enabled: Boolean(id), retry: 1 });
+  const { user } = useAuth();
+  const query = useQuery({ queryKey: ["product-page", id, preview ? user?.id : "public"], queryFn: () => preview ? fetchProductForPreview(id!, user!.id) : fetchPublishedProductById(id!), enabled: Boolean(id) && (!preview || Boolean(user)), retry: 1 });
+  const context = useQuery({ queryKey: ["product-page-context", id, query.data?.updatedAt], queryFn: () => fetchProductPageContext(query.data!), enabled: Boolean(query.data), retry: 1 });
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [id, preview]);
   if (!id) return <ProductPageView key="demo" product={demoProduct} />;
   if (query.isLoading) return <main className="pp-route-state" role="status"><span className="pp-loading" />Carregando produto...</main>;
-  if (query.isError || !query.data || query.data.status !== "publicado") return <main className="pp-route-state"><h1>Produto indisponível</h1><p>{query.isError ? "Não foi possível carregar este anúncio. Tente novamente." : "Este anúncio não foi encontrado ou não está publicado."}</p>{query.isError && <button type="button" onClick={() => query.refetch()}>Tentar novamente</button>}<Link to="/">Voltar ao início</Link></main>;
-  return <ProductPageView key={query.data.id} product={toProductPage(query.data)} />;
+  if (query.isError || !query.data || (!preview && query.data.status !== "publicado")) return <main className="pp-route-state"><h1>Produto indisponível</h1><p>{query.isError ? "Não foi possível carregar este anúncio. Tente novamente." : "Este anúncio não foi encontrado ou não está publicado."}</p>{query.isError && <button type="button" onClick={() => query.refetch()}>Tentar novamente</button>}<Link to="/">Voltar ao início</Link></main>;
+  return <><ProductPageView key={query.data.id} product={{ ...toProductPage(query.data, context.data), preview: preview && query.data.status !== "publicado" }} />{(context.isError || context.data?.incomplete) && <p role="status" className="pp-context-note">Algumas sugestões não puderam ser carregadas. <button type="button" onClick={() => context.refetch()}>Tentar novamente</button></p>}</>;
 }

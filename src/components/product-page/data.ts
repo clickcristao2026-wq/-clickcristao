@@ -1,4 +1,5 @@
-import type { Product } from "@/types/product";
+import type { Product, ProductCategory } from "@/types/product";
+import { categoryPath } from "@/lib/catalog";
 
 export interface ProductCardData {
   id: string;
@@ -11,6 +12,7 @@ export interface ProductCardData {
 export interface ProductPageData {
   id: string;
   demo: boolean;
+  preview?: boolean;
   name: string;
   subtitle: string;
   price: number;
@@ -87,17 +89,36 @@ export const demoProduct: ProductPageData = {
 
 // Public buyer ratings, stock and commercial conditions have no trusted source
 // in the current schema. Seller self-evaluation is deliberately not used here.
-export function toProductPage(product: Product): ProductPageData {
+export interface ProductPageContext {
+  categories?: ProductCategory[];
+  related?: Product[];
+  recommendations?: Product[];
+}
+
+export function productCard(product: Product): ProductCardData {
+  return { id: product.id, name: product.nome, subtitle: product.modelo || "", price: product.preco, image: (product.imagens.find(i => i.papel === "destaque") ?? product.imagens[0])?.url || "" };
+}
+
+export function toProductPage(product: Product, context: ProductPageContext = {}): ProductPageData {
+  const pricing = product.detalhes.precificacao;
+  const conditions: ProductPageData["conditions"] = [];
+  if (pricing.afiliadoAtivo) conditions.push({ kind: "affiliate", text: "Produto Afiliado" });
+  if (pricing.freteAtivo && pricing.freteGratis) conditions.push({ kind: "shipping", text: "Frete Grátis" });
+  if (pricing.cupomAtivo && pricing.cupomPercentual > 0 && pricing.cupomPercentual <= 100 && pricing.cupomNome.trim()) {
+    conditions.push({ kind: "coupon", text: `Cupom ${pricing.cupomPercentual}% desconto · ${pricing.cupomNome}` });
+  }
+  const cards = (products: Product[] = []) => [...new Map(products.filter(p => p.status === "publicado" && p.id !== product.id).map(p => [p.id, productCard(p)])).values()];
+  const categories = categoryPath(context.categories ?? [], product.categoriaId || "").filter(c => c.nivel > 0).map(c => c.nome);
   return {
     id: product.id, demo: false, name: product.nome, subtitle: product.modelo ?? "",
     price: product.preco, installments: product.precoParceladoTexto ?? "",
     sku: product.sku ?? "Não informado", rating: null, stock: null,
     summary: product.detalhes.conteudoAnuncio || product.descricao || "",
     description: product.descricao ? product.descricao.split(/\n\s*\n/) : [],
-    images: product.imagens.filter(i => i.papel !== "corpo").map(i => i.url),
+    images: product.imagens.filter(i => i.papel === "destaque" || i.papel === "galeria").sort((a, b) => Number(b.papel === "destaque") - Number(a.papel === "destaque") || a.ordem - b.ordem).map(i => i.url),
     editorial: product.midias.filter(i => i.papel === "corpo").map(i => i.url).slice(0, 2),
     seller: { name: product.detalhes.nomeLoja || "Loja do vendedor", rating: null, partner: false },
-    conditions: [],
+    conditions,
     tabs: [
       { label: "Ficha Técnica", content: product.fichaTecnica || "Ficha técnica ainda não informada pelo vendedor." },
       { label: "Qualidade do Produto", content: product.detalhes.qualidade || "Qualidade ainda não informada pelo vendedor." },
@@ -106,6 +127,7 @@ export function toProductPage(product: Product): ProductPageData {
       { label: "Avaliação", content: "Este anúncio ainda não possui avaliações verificadas de compradores." },
     ],
     video: product.midias.find(i => i.papel === "video")?.url,
-    related: [], recommendations: [], breadcrumbs: ["Produtos"],
+    outfitImage: product.imagens.find(i => i.papel === "destaque")?.url,
+    related: cards(context.related).slice(0, 3), recommendations: cards(context.recommendations).slice(0, 8), breadcrumbs: categories.length ? categories : ["Produtos"],
   };
 }

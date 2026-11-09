@@ -28,8 +28,8 @@ const Index = () => {
             <Button size="lg" variant="outline" onClick={() => navigate("/cadastro")}>
               Criar Nova Conta
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/produto")}>
-              Ver página de produto
+            <Button size="lg" variant="outline" onClick={() => navigate("/produto/demonstracao")}>
+              Ver demonstração de produto
             </Button>
           </div>
         </div>

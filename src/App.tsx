@@ -118,7 +118,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/produto" element={<Produto />} />
+            <Route path="/produto/demonstracao" element={<Produto />} />
             <Route path="/produto/:id" element={<Produto />} />
+            <Route path="/produto/:id/previa" element={<ProtectedRoute allowedRoles={["vendedor", "anunciante"]}><Produto preview /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/dashboards"

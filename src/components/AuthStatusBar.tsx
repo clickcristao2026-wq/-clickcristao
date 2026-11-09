@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LayoutGrid, LogOut, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,8 +10,9 @@ import { ROLE_LABELS } from "@/types/auth";
 export function AuthStatusBar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  if (!user) return null;
+  if (!user || location.pathname.startsWith("/produto/")) return null;
 
   const handleLogout = () => {
     logout();

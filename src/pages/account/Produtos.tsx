@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AccountLayout } from "@/components/AccountLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pause, Play, Pencil, Trash2 } from "lucide-react";
+import { Eye, Plus, Pause, Play, Pencil, Trash2 } from "lucide-react";
+import { productPath, productPreviewPath } from "@/lib/product-links";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProducts, updateProductStatus } from "@/lib/products";
 import { formatBRL } from "@/lib/pricing";
@@ -51,7 +52,8 @@ const Produtos = () => {
       toast({ title: "Erro", description: result.error, variant: "destructive" });
       return;
     }
-    carregar();
+    if (novoStatus === "publicado") navigate(productPath(produto.id));
+    else carregar();
   };
 
   const remover = async (produto: Product) => {
@@ -87,15 +89,15 @@ const Produtos = () => {
           <div className="grid gap-4">
             {produtosVisiveis.map((produto) => (
               <Card key={produto.id}>
-                <CardContent className="p-4 flex items-center gap-4">
+                <CardContent className="p-4 flex flex-wrap items-center gap-4">
                   <div className="w-20 h-20 rounded-lg overflow-hidden border flex-shrink-0 bg-muted">
                     {(produto.imagens.find(image => image.papel === "destaque") ?? produto.imagens[0]) ? (
                       <img src={(produto.imagens.find(image => image.papel === "destaque") ?? produto.imagens[0]).url} alt={produto.nome} className="w-full h-full object-cover" />
                     ) : null}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{produto.nome}</h4>
+                      <h4 className="font-medium break-words"><Link to={produto.status === "publicado" ? productPath(produto.id) : productPreviewPath(produto.id)}>{produto.nome}</Link></h4>
                       <Badge className={statusColor[produto.status]}>{statusLabel[produto.status]}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -103,7 +105,10 @@ const Produtos = () => {
                       {produto.sku ? ` · SKU ${produto.sku}` : ""}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link aria-label={`${produto.status === "publicado" ? "Ver anúncio de" : "Pré-visualizar"} ${produto.nome}`} to={produto.status === "publicado" ? productPath(produto.id) : productPreviewPath(produto.id)}><Eye className="h-4 w-4 mr-1" />{produto.status === "publicado" ? "Ver anúncio" : "Pré-visualizar"}</Link>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

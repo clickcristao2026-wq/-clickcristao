@@ -52,6 +52,7 @@ export interface ProductDetails {
   secao: "premium" | "intermediario" | "popular" | "";
   avaliacao: ProductEvaluation;
   precificacao: import("@/lib/pricing").ProductPricing;
+  paginaProduto?: { complementares: string[] };
 }
 export interface ProductMediaUpload {
   file: File;

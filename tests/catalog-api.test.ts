@@ -1,10 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchCategoryTree, fetchPublishedProductById } from "@/lib/products";
+import { fetchCategoryTree, fetchProductForPreview, fetchPublishedProductById, fetchPublishedProducts } from "@/lib/products";
 const mocks = vi.hoisted(() => ({ from: vi.fn() }));
 vi.mock("@/lib/supabaseClient", () => ({ supabase: { from: mocks.from } }));
 beforeEach(() => vi.clearAllMocks());
 
 describe("consulta pública do produto", () => {
+  it("filtra as sugestões por publicação e classificação e exclui o próprio anúncio", async () => {
+    const query = { select: vi.fn(), eq: vi.fn(), in: vi.fn(), neq: vi.fn(), order: vi.fn(), limit: vi.fn().mockResolvedValue({ data: [], error: null }) };
+    for (const method of [query.select, query.eq, query.in, query.neq, query.order]) method.mockReturnValue(query);
+    mocks.from.mockReturnValue(query);
+    await expect(fetchPublishedProducts({ categoryIds: ["category"], excludeId: "current", limit: 8 })).resolves.toEqual([]);
+    expect(query.eq).toHaveBeenCalledWith("status", "publicado");
+    expect(query.in).toHaveBeenCalledWith("categoria_id", ["category"]);
+    expect(query.neq).toHaveBeenCalledWith("id", "current");
+    expect(query.select.mock.calls[0][0]).not.toContain("product_pricing");
+  });
+  it("não consulta o catálogo inteiro quando a seleção de complementares está vazia", async () => {
+    await expect(fetchPublishedProducts({ ids: [] })).resolves.toEqual([]);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+  it("restringe a prévia ao vendedor e exclui anúncios removidos", async () => {
+    const query = { select: vi.fn(), eq: vi.fn(), neq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) };
+    for (const method of [query.select, query.eq, query.neq]) method.mockReturnValue(query);
+    mocks.from.mockReturnValue(query);
+    await expect(fetchProductForPreview("id", "owner")).resolves.toBeNull();
+    expect(query.eq).toHaveBeenCalledWith("seller_id", "owner");
+    expect(query.neq).toHaveBeenCalledWith("status", "removido");
+  });
   it("propaga erros de rede para permitir recuperação na página", async () => {
     const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "Serviço indisponível" } }) };
     query.select.mockReturnValue(query);
@@ -12,6 +34,7 @@ describe("consulta pública do produto", () => {
     mocks.from.mockReturnValue(query);
     await expect(fetchPublishedProductById("id")).rejects.toThrow("Serviço indisponível");
     expect(query.eq).toHaveBeenCalledWith("status", "publicado");
+    expect(query.select.mock.calls[0][0]).not.toContain("product_pricing");
   });
   it("devolve null apenas quando o anúncio não existe", async () => {
     const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) };

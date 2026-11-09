@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   attach: vi.fn(),
   selectedAttributes: vi.fn(),
+  publicProducts: vi.fn(),
 }));
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "seller-a", role: "vendedor" } }),
@@ -57,6 +58,7 @@ vi.mock("@/lib/products", () => ({
   updateProduct: mocks.update,
   fetchProductById: mocks.fetch,
   fetchProductSelectedAttributes: mocks.selectedAttributes,
+  fetchPublishedProducts: mocks.publicProducts,
   slugify: (text: string) => text.toLowerCase(),
 }));
 vi.mock("@/lib/ai", () => ({
@@ -75,6 +77,7 @@ const mount = (path = "/produtos/novo") =>
         <Route path="/produtos/novo" element={<CadastroProduto />} />
         <Route path="/produtos/:id/editar" element={<CadastroProduto />} />
         <Route path="/account/produtos" element={<p>Meus produtos</p>} />
+        <Route path="/produto/:id" element={<p>Anúncio publicado</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -92,8 +95,43 @@ beforeEach(() => {
   mocks.update.mockResolvedValue({ ok: true });
   mocks.attach.mockResolvedValue(undefined);
   mocks.selectedAttributes.mockResolvedValue([]);
+  mocks.publicProducts.mockResolvedValue([]);
 });
+
+async function fillForPublication(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(await screen.findByLabelText("Nome do Produto *"), "Jaqueta de Couro");
+  await choose(user, "Tipo *", "Produto");
+  await choose(user, "Categoria *", "Moda");
+  await user.click(screen.getByRole("button", { name: /PRÓXIMA ETAPA/ }));
+  await user.type(screen.getByLabelText("Preço do produto * (R$)"), "389,90");
+  await user.click(screen.getByRole("button", { name: /PRÓXIMA ETAPA/ }));
+  const photo = (name: string) => new File(["photo"], name, { type: "image/jpeg" });
+  await user.upload(screen.getByLabelText("Imagens destacadas"), [photo("a.jpg"), photo("b.jpg")]);
+  await user.upload(screen.getByLabelText("Galeria do produto"), [photo("c.jpg")]);
+  await user.upload(screen.getByLabelText("Imagens no corpo do anúncio"), [photo("d.jpg"), photo("e.jpg")]);
+  await user.upload(screen.getByLabelText("Vídeo do produto"), new File(["video"], "v.mp4", { type: "video/mp4" }));
+}
 describe("cadastro em três etapas", () => {
+  it("abre o modelo público após cadastrar e publicar, salvando os complementares", async () => {
+    const user = userEvent.setup();
+    mocks.publicProducts.mockResolvedValue([{ id: "cinto", nome: "Cinto de Couro", preco: 89.9, modelo: "Marrom", imagens: [] }]);
+    mount();
+    await fillForPublication(user);
+    await user.type(screen.getByLabelText("Buscar produtos complementares"), "Cinto");
+    await user.click(await screen.findByRole("checkbox", { name: "Selecionar Cinto de Couro" }));
+    await user.click(screen.getByRole("button", { name: "SALVAR REGISTRO" }));
+    await screen.findByText("Anúncio publicado");
+    expect(mocks.create.mock.calls[0][1].detalhes.paginaProduto.complementares).toEqual(["cinto"]);
+  });
+  it("mantém o vendedor no gerenciamento se a publicação teve falha nas mídias", async () => {
+    mocks.create.mockResolvedValue({ ok: true, productId: "new-product", error: "Dados salvos como rascunho. Falha ao enviar vídeo." });
+    const user = userEvent.setup();
+    mount();
+    await fillForPublication(user);
+    await user.click(screen.getByRole("button", { name: "SALVAR REGISTRO" }));
+    await screen.findByText("Meus produtos");
+    expect(screen.queryByText("Anúncio publicado")).toBeNull();
+  });
   it("preserva marca e cor antigas desativadas durante a edição", async () => {
     const details = defaultDetails();
     details.precificacao.precoNormal = 100;

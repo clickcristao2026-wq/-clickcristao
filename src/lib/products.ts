@@ -368,6 +368,11 @@ function mapProductRow(row: ProductRow): Product {
 const PRODUCT_SELECT =
   "*, product_images(*), product_attribute_selections(attribute_value_id), product_pricing(data)";
 
+// The pricing table is private even for a published product. Anonymous clients
+// must query only the sanitized public details stored on products.
+const PUBLIC_PRODUCT_SELECT =
+  "id,seller_id,categoria_id,nome,modelo,preco,preco_parcelado_texto,descricao,ficha_tecnica,beneficios_texto,curiosidade,modo_uso_cuidados,garantia_satisfacao,sku,status,vendas_count,created_at,updated_at,detalhes,product_images(*),product_attribute_selections(attribute_value_id)";
+
 export async function fetchMyProducts(sellerId: string): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
@@ -582,10 +587,37 @@ export async function fetchProductById(
 export async function fetchPublishedProductById(productId: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(PUBLIC_PRODUCT_SELECT)
     .eq("id", productId)
     .eq("status", "publicado")
     .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapProductRow(data as unknown as ProductRow) : null;
+}
+
+export interface PublishedProductOptions {
+  ids?: string[];
+  categoryIds?: string[];
+  excludeId?: string;
+  search?: string;
+  limit?: number;
+}
+
+export async function fetchPublishedProducts(options: PublishedProductOptions = {}): Promise<Product[]> {
+  if (options.ids?.length === 0 || options.categoryIds?.length === 0) return [];
+  let query = supabase.from("products").select(PUBLIC_PRODUCT_SELECT).eq("status", "publicado");
+  if (options.ids) query = query.in("id", options.ids);
+  if (options.categoryIds) query = query.in("categoria_id", options.categoryIds);
+  if (options.excludeId) query = query.neq("id", options.excludeId);
+  if (options.search?.trim()) query = query.ilike("nome", `%${options.search.trim().replace(/[\\%_]/g, "\\$&")}%`);
+  const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(Math.max(1, Math.min(options.limit ?? 12, 24)));
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as ProductRow[]).map(mapProductRow);
+}
+
+export async function fetchProductForPreview(productId: string, sellerId: string): Promise<Product | null> {
+  const { data, error } = await supabase.from("products").select(PUBLIC_PRODUCT_SELECT)
+    .eq("id", productId).eq("seller_id", sellerId).neq("status", "removido").maybeSingle();
   if (error) throw new Error(error.message);
   return data ? mapProductRow(data as unknown as ProductRow) : null;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Expand, ImageOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -12,11 +12,19 @@ export function ProductPhoto({ src, alt, priority = false, className = "" }: { s
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
   const [active, setActive] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const thumbnails = useRef<HTMLDivElement>(null);
   const photos = images.length ? images : [""];
   const step = (delta: number) => setActive(i => (i + delta + photos.length) % photos.length);
+  useEffect(() => {
+    const list = thumbnails.current;
+    const selected = list?.children[active] as HTMLElement | undefined;
+    if (!list || !selected) return;
+    const horizontal = list.scrollWidth > list.clientWidth;
+    list.scrollTo?.({ left: horizontal ? selected.offsetLeft - (list.children[0] as HTMLElement).offsetLeft : 0, top: horizontal ? 0 : selected.offsetTop - (list.children[0] as HTMLElement).offsetTop, behavior: "instant" });
+  }, [active]);
   return <div className="pp-gallery">
     <div className="pp-thumbnails" aria-label="Fotos do produto">
-      <div className="pp-thumbnail-list">{photos.map((src, i) => <button type="button" key={`${src}-${i}`} className={active === i ? "is-active" : ""} aria-label={`Ver foto ${i + 1}`} aria-pressed={active === i} onClick={() => setActive(i)}><ProductPhoto src={i === 0 && src.startsWith("/images/produto/") ? "/images/produto/galeria-1-480.webp" : src} alt={`Miniatura ${i + 1}`} /></button>)}</div>
+      <div className="pp-thumbnail-list" ref={thumbnails}>{photos.map((src, i) => <button type="button" key={`${src}-${i}`} className={active === i ? "is-active" : ""} aria-label={`Ver foto ${i + 1}`} aria-pressed={active === i} onClick={() => setActive(i)}><ProductPhoto src={i === 0 && src.startsWith("/images/produto/") ? "/images/produto/galeria-1-480.webp" : src} alt={`Miniatura ${i + 1}`} /></button>)}</div>
       {photos.length > 1 && <div className="pp-gallery-navigation"><button type="button" aria-label="Foto anterior" onClick={() => step(-1)}><ChevronUp /></button><button type="button" aria-label="Próxima foto" onClick={() => step(1)}><ChevronDown /></button></div>}
     </div>
     <div className="pp-main-photo" onTouchStart={e => { e.currentTarget.dataset.touchX = String(e.touches[0].clientX); }} onTouchEnd={e => { const start = Number(e.currentTarget.dataset.touchX); const delta = e.changedTouches[0].clientX - start; if (Math.abs(delta) > 45) step(delta < 0 ? 1 : -1); }}>

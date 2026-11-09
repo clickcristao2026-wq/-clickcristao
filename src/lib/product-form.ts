@@ -21,6 +21,7 @@ export function defaultDetails(): ProductDetails {
       links: ["", "", ""],
     },
     precificacao: { ...emptyPricing },
+    paginaProduto: { complementares: [] },
   };
 }
 export function normalizeDetails(
@@ -36,6 +37,11 @@ export function normalizeDetails(
       ...defaults.precificacao,
       precoNormal: price,
       ...details?.precificacao,
+    },
+    paginaProduto: {
+      complementares: Array.isArray(details?.paginaProduto?.complementares)
+        ? [...new Set(details.paginaProduto.complementares.filter((id): id is string => typeof id === "string" && Boolean(id.trim())))].slice(0, 3)
+        : [],
     },
   };
 }

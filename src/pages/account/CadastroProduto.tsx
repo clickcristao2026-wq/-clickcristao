@@ -56,6 +56,8 @@ import { MediaGroup } from "@/components/products/MediaGroup";
 import { PriceStep } from "@/components/products/PriceStep";
 import { AttributeSelectionCard } from "@/components/products/AttributeSelectionCard";
 import { attributesForCategory, reconcileAttributeValues } from "@/lib/catalog";
+import { ComplementaryProductsField } from "@/components/products/ComplementaryProductsField";
+import { productPath } from "@/lib/product-links";
 
 const initialForm = {
   nome: "",
@@ -390,7 +392,8 @@ const CadastroProduto = () => {
             : "As informações foram salvas."),
         variant: warning ? "destructive" : undefined,
       });
-      navigate("/account/produtos");
+      const savedId = productId || ("productId" in result ? result.productId as string : undefined);
+      navigate(form.status === "publicado" && !result.error && savedId ? productPath(savedId) : "/account/produtos");
     } catch {
       toast({
         title: "Erro ao salvar",
@@ -768,6 +771,11 @@ const CadastroProduto = () => {
                 draftId={draftId}
                 getSnapshot={getSnapshot}
                 getImages={() => prepareAnalysisImages(visibleMedia, uploads)}
+              />
+              <ComplementaryProductsField
+                selected={details.paginaProduto?.complementares ?? []}
+                excludeId={productId}
+                onChange={(complementares) => updateDetail("paginaProduto", { complementares })}
               />
               <ProductSection title="STATUS DA PUBLICAÇÃO">
                 <Select

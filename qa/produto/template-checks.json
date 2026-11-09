@@ -1,0 +1,60 @@
+[
+  {
+    "name": "desktop",
+    "overflow": false,
+    "brokenImages": 0,
+    "thumbnails": 12,
+    "conditions": [
+      "Produto Afiliado",
+      "Frete Grátis",
+      "Cupom 15% desconto · BEMVINDO"
+    ],
+    "actionsVisible": true,
+    "galleryHeight": 502.546875,
+    "errors": [],
+    "publicQueriesOnly": true,
+    "twelfthPhoto": true,
+    "navigatedToRecommendation": true
+  },
+  {
+    "name": "mobile",
+    "overflow": false,
+    "brokenImages": 0,
+    "thumbnails": 12,
+    "conditions": [
+      "Produto Afiliado",
+      "Frete Grátis",
+      "Cupom 15% desconto · BEMVINDO"
+    ],
+    "actionsVisible": false,
+    "galleryHeight": 368.4375,
+    "errors": [],
+    "publicQueriesOnly": true,
+    "twelfthPhoto": true,
+    "navigatedToRecommendation": true
+  },
+  {
+    "name": "small-mobile",
+    "overflow": false,
+    "brokenImages": 0,
+    "thumbnails": 12,
+    "conditions": [
+      "Produto Afiliado",
+      "Frete Grátis",
+      "Cupom 15% desconto · BEMVINDO"
+    ],
+    "actionsVisible": false,
+    "galleryHeight": 297.0625,
+    "errors": [],
+    "publicQueriesOnly": true,
+    "twelfthPhoto": true,
+    "navigatedToRecommendation": true
+  },
+  {
+    "name": "live-public-catalog",
+    "title": "Jaqueta Premium ",
+    "errors": [],
+    "overflow": false,
+    "publicQueriesOnly": true
+  }
+]
