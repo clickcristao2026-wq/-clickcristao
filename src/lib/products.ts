@@ -577,6 +577,19 @@ export async function fetchProductById(
   return mapProductRow(data as unknown as ProductRow);
 }
 
+// Keep network errors distinct from absent announcements on the public page.
+// Existing seller/admin lookups preserve their original nullable behavior.
+export async function fetchPublishedProductById(productId: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("id", productId)
+    .eq("status", "publicado")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapProductRow(data as unknown as ProductRow) : null;
+}
+
 export async function updateProduct(
   sellerId: string,
   productId: string,

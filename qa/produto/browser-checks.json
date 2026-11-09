@@ -1,0 +1,146 @@
+[
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "overflow": false,
+    "brokenImages": [],
+    "title": {
+      "x": 737,
+      "y": 95,
+      "width": 671,
+      "height": 41
+    },
+    "gallery": {
+      "x": 32,
+      "y": 62,
+      "width": 671,
+      "height": 503
+    },
+    "purchase": {
+      "x": 737,
+      "y": 404,
+      "width": 671,
+      "height": 79
+    },
+    "actionsVisible": true,
+    "sections": [
+      "pp-hero",
+      "pp-editorial",
+      "pp-tabs",
+      "pp-video",
+      "pp-related",
+      "pp-recommendations"
+    ],
+    "errors": [],
+    "interactions": "passed"
+  },
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "overflow": false,
+    "brokenImages": [],
+    "title": {
+      "x": 16,
+      "y": 722,
+      "width": 358,
+      "height": 27
+    },
+    "gallery": {
+      "x": 16,
+      "y": 87,
+      "width": 358,
+      "height": 368
+    },
+    "purchase": {
+      "x": 16,
+      "y": 479,
+      "width": 358,
+      "height": 215
+    },
+    "actionsVisible": false,
+    "sections": [
+      "pp-hero",
+      "pp-editorial",
+      "pp-tabs",
+      "pp-video",
+      "pp-related",
+      "pp-recommendations"
+    ],
+    "errors": [],
+    "interactions": "passed"
+  },
+  {
+    "name": "tablet",
+    "width": 820,
+    "height": 1180,
+    "overflow": false,
+    "brokenImages": [],
+    "title": {
+      "x": 422,
+      "y": 95,
+      "width": 378,
+      "height": 30
+    },
+    "gallery": {
+      "x": 20,
+      "y": 62,
+      "width": 378,
+      "height": 428
+    },
+    "purchase": {
+      "x": 20,
+      "y": 546,
+      "width": 780,
+      "height": 79
+    },
+    "actionsVisible": true,
+    "sections": [
+      "pp-hero",
+      "pp-editorial",
+      "pp-tabs",
+      "pp-video",
+      "pp-related",
+      "pp-recommendations"
+    ],
+    "errors": [],
+    "interactions": "passed"
+  },
+  {
+    "name": "small-mobile",
+    "width": 320,
+    "height": 740,
+    "overflow": false,
+    "brokenImages": [],
+    "title": {
+      "x": 16,
+      "y": 651,
+      "width": 288,
+      "height": 26
+    },
+    "gallery": {
+      "x": 16,
+      "y": 87,
+      "width": 288,
+      "height": 297
+    },
+    "purchase": {
+      "x": 16,
+      "y": 408,
+      "width": 288,
+      "height": 215
+    },
+    "actionsVisible": false,
+    "sections": [
+      "pp-hero",
+      "pp-editorial",
+      "pp-tabs",
+      "pp-video",
+      "pp-related",
+      "pp-recommendations"
+    ],
+    "errors": [],
+    "interactions": "passed"
+  }
+]

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthStatusBar } from "@/components/AuthStatusBar";
 import Index from "./pages/Index";
+import Produto from "./pages/Produto";
 import Login from "./pages/Login";
 import DashboardIndex from "./pages/DashboardIndex";
 import NotFound from "./pages/NotFound";
@@ -116,6 +117,8 @@ const App = () => (
           <AuthStatusBar />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/produto" element={<Produto />} />
+            <Route path="/produto/:id" element={<Produto />} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/dashboards"

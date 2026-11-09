@@ -21,12 +21,15 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">
             A plataforma para comprar, vender, anunciar e revender com propósito.
           </p>
-          <div className="flex justify-center gap-4 mt-8">
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
             <Button size="lg" onClick={() => navigate("/login")} style={{ backgroundColor: "#2035F2" }} className="text-white">
               Entrar
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate("/cadastro")}>
               Criar Nova Conta
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate("/produto")}>
+              Ver página de produto
             </Button>
           </div>
         </div>

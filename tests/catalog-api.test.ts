@@ -1,8 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchCategoryTree } from "@/lib/products";
+import { fetchCategoryTree, fetchPublishedProductById } from "@/lib/products";
 const mocks = vi.hoisted(() => ({ from: vi.fn() }));
 vi.mock("@/lib/supabaseClient", () => ({ supabase: { from: mocks.from } }));
 beforeEach(() => vi.clearAllMocks());
+
+describe("consulta pública do produto", () => {
+  it("propaga erros de rede para permitir recuperação na página", async () => {
+    const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "Serviço indisponível" } }) };
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    mocks.from.mockReturnValue(query);
+    await expect(fetchPublishedProductById("id")).rejects.toThrow("Serviço indisponível");
+    expect(query.eq).toHaveBeenCalledWith("status", "publicado");
+  });
+  it("devolve null apenas quando o anúncio não existe", async () => {
+    const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) };
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    mocks.from.mockReturnValue(query);
+    await expect(fetchPublishedProductById("inexistente")).resolves.toBeNull();
+  });
+});
 describe("árvore completa de classificação", () => {
   it("carrega todos os registros depois do limite de 1.000 do Supabase", async () => {
     const rows = Array.from({ length: 1034 }, (_, i) => ({
