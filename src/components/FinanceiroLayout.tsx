@@ -1,20 +1,12 @@
-import { ReactNode } from "react";
-import FinanceiroSidebar from "./FinanceiroSidebar";
-import { SidebarInset } from "@/components/ui/sidebar";
+import type { ReactNode } from "react";
+import icon from "@/assets/icons/financeiro.png";
+import { financeiroMenuItems } from "@/config/financeiroMenuConfig";
+import { OperationalDashboard } from "./OperationalDashboard";
 
-interface FinanceiroLayoutProps {
-  children: ReactNode;
-}
-
-const FinanceiroLayout = ({ children }: FinanceiroLayoutProps) => {
+export default function FinanceiroLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <FinanceiroSidebar />
-      <SidebarInset className="flex-1">
-        <main className="p-6">{children}</main>
-      </SidebarInset>
-    </div>
+    <OperationalDashboard name="Financeiro" icon={icon} iconColor="#10B981" sections={[{ items: financeiroMenuItems.map(({ path, ...item }) => ({ ...item, url: path })) }]}>
+      {children}
+    </OperationalDashboard>
   );
-};
-
-export default FinanceiroLayout;
+}

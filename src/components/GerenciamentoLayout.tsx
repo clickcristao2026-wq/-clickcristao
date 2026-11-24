@@ -1,26 +1,12 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { GerenciamentoSidebar } from "./GerenciamentoSidebar";
+import type { ReactNode } from "react";
+import icon from "@/assets/icons/gerenciamento.png";
+import { getGerenciamentoMenu } from "@/config/gerenciamentoMenuConfig";
+import { OperationalDashboard } from "./OperationalDashboard";
 
-interface GerenciamentoLayoutProps {
-  children: React.ReactNode;
-  title: string;
-}
-
-export function GerenciamentoLayout({ children, title }: GerenciamentoLayoutProps) {
+export function GerenciamentoLayout({ children, title }: { children: ReactNode; title: string }) {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <GerenciamentoSidebar />
-        <main className="flex-1 flex flex-col">
-          <header className="h-14 border-b border-border flex items-center px-4 gap-4">
-            <SidebarTrigger />
-            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-          </header>
-          <div className="flex-1 p-6 overflow-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <OperationalDashboard name="Gerenciamento" icon={icon} iconColor="#14B8A6" sections={getGerenciamentoMenu()} title={title}>
+      {children}
+    </OperationalDashboard>
   );
 }

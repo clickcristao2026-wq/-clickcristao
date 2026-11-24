@@ -25,7 +25,7 @@ const logisticaMenu: LogisticaMenuItem[] = [
   { title: "Solicitados", url: "/logistica/solicitados", icon: Search },
   { title: "Entregas", url: "/logistica/entregas", icon: Truck },
   { title: "Temporizador", url: "/logistica/temporizador", icon: Timer },
-  { title: "Click Transportes", url: "/logistica/transportes", icon: Truck },
+  { title: "Transportes", url: "/logistica/transportes", icon: Truck },
   { title: "Notificações", url: "/logistica/notificacoes", icon: Bell },
   { title: "Avisos", url: "/logistica/avisos", icon: MessageSquare },
 ];

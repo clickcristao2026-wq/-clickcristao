@@ -1,28 +1,38 @@
-// Dados compartilhados entre Gerenciamento/Financeiro e Gerenciamento/Faturamento
-// Fonte única de verdade para sincronização
+import { historicoInBox } from "./dashboardInbox";
+import { categoriasFixas, categoriasVariaveis, transacaoParceiro } from "./dashboardTransactions";
 
 export interface DadosMensais {
   vendaVariavel: number;
   vendaFixa: number;
-  rifas: number;
+  inbox: number;
+  parceiro: number;
   destaques: number;
   multasRecuperadas: number;
   custos: number;
 }
 
+// Valores demonstrativos em centavos. Janeiro usa os mesmos registros de Transação e inBox.
 export const dadosMensaisGerenciamento: Record<string, DadosMensais> = {
-  janeiro: { vendaVariavel: 8800, vendaFixa: 24200, rifas: 16750, destaques: 11544.40, multasRecuperadas: 2890, custos: 27700 },
-  fevereiro: { vendaVariavel: 9150, vendaFixa: 26800, rifas: 18200, destaques: 12800, multasRecuperadas: 3200, custos: 29500 },
-  março: { vendaVariavel: 10200, vendaFixa: 28500, rifas: 19800, destaques: 13500, multasRecuperadas: 3500, custos: 31200 },
-  abril: { vendaVariavel: 7500, vendaFixa: 21000, rifas: 14500, destaques: 9800, multasRecuperadas: 2400, custos: 24800 },
-  maio: { vendaVariavel: 11000, vendaFixa: 30200, rifas: 21000, destaques: 14200, multasRecuperadas: 3800, custos: 33500 },
-  junho: { vendaVariavel: 9800, vendaFixa: 27500, rifas: 18500, destaques: 12300, multasRecuperadas: 3100, custos: 30200 },
-  julho: { vendaVariavel: 12500, vendaFixa: 33000, rifas: 23500, destaques: 15800, multasRecuperadas: 4200, custos: 36500 },
-  agosto: { vendaVariavel: 13200, vendaFixa: 35500, rifas: 25000, destaques: 16800, multasRecuperadas: 4500, custos: 38800 },
-  setembro: { vendaVariavel: 11500, vendaFixa: 31000, rifas: 22000, destaques: 14800, multasRecuperadas: 3900, custos: 34500 },
-  outubro: { vendaVariavel: 14200, vendaFixa: 38000, rifas: 27500, destaques: 18500, multasRecuperadas: 5000, custos: 42000 },
-  novembro: { vendaVariavel: 15000, vendaFixa: 40000, rifas: 29000, destaques: 19500, multasRecuperadas: 5300, custos: 44500 },
-  dezembro: { vendaVariavel: 17500, vendaFixa: 45000, rifas: 33500, destaques: 22500, multasRecuperadas: 6200, custos: 50000 },
+  janeiro: {
+    vendaVariavel: categoriasVariaveis.reduce((total, item) => total + item.taxaPlataforma, 0),
+    vendaFixa: categoriasFixas.reduce((total, item) => total + item.valorPlataforma, 0),
+    parceiro: transacaoParceiro.taxaPlataforma,
+    inbox: historicoInBox.reduce((total, item) => total + item.arrecadado, 0),
+    destaques: 1154440,
+    multasRecuperadas: 289000,
+    custos: 2770000,
+  },
+  fevereiro: { vendaVariavel: 915000, vendaFixa: 2680000, inbox: 1820000, parceiro: 0, destaques: 1280000, multasRecuperadas: 320000, custos: 2950000 },
+  março: { vendaVariavel: 1020000, vendaFixa: 2850000, inbox: 1980000, parceiro: 0, destaques: 1350000, multasRecuperadas: 350000, custos: 3120000 },
+  abril: { vendaVariavel: 750000, vendaFixa: 2100000, inbox: 1450000, parceiro: 0, destaques: 980000, multasRecuperadas: 240000, custos: 2480000 },
+  maio: { vendaVariavel: 1100000, vendaFixa: 3020000, inbox: 2100000, parceiro: 0, destaques: 1420000, multasRecuperadas: 380000, custos: 3350000 },
+  junho: { vendaVariavel: 980000, vendaFixa: 2750000, inbox: 1850000, parceiro: 0, destaques: 1230000, multasRecuperadas: 310000, custos: 3020000 },
+  julho: { vendaVariavel: 1250000, vendaFixa: 3300000, inbox: 2350000, parceiro: 0, destaques: 1580000, multasRecuperadas: 420000, custos: 3650000 },
+  agosto: { vendaVariavel: 1320000, vendaFixa: 3550000, inbox: 2500000, parceiro: 0, destaques: 1680000, multasRecuperadas: 450000, custos: 3880000 },
+  setembro: { vendaVariavel: 1150000, vendaFixa: 3100000, inbox: 2200000, parceiro: 0, destaques: 1480000, multasRecuperadas: 390000, custos: 3450000 },
+  outubro: { vendaVariavel: 1420000, vendaFixa: 3800000, inbox: 2750000, parceiro: 0, destaques: 1850000, multasRecuperadas: 500000, custos: 4200000 },
+  novembro: { vendaVariavel: 1500000, vendaFixa: 4000000, inbox: 2900000, parceiro: 0, destaques: 1950000, multasRecuperadas: 530000, custos: 4450000 },
+  dezembro: { vendaVariavel: 1750000, vendaFixa: 4500000, inbox: 3350000, parceiro: 0, destaques: 2250000, multasRecuperadas: 620000, custos: 5000000 },
 };
 
 export const mesesDoAno = [
@@ -30,6 +40,18 @@ export const mesesDoAno = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
+export const linhasReceita = [
+  { key: "vendaVariavel", name: "Venda Variável", label: "Venda Variável (% plataforma)", color: "#3b82f6" },
+  { key: "vendaFixa", name: "Venda Fixa (Anúncios)", label: "Venda Fixa (Anúncios)", color: "#10b981" },
+  { key: "parceiro", name: "Parceiro Associado", label: "Valor Parceiro Associado", color: "#2035f2" },
+  { key: "inbox", name: "inBox", label: "Valor inBox Arrecadado", color: "#f59e0b" },
+  { key: "destaques", name: "Destaques", label: "Valor Destaques Realizados", color: "#8b5cf6" },
+  { key: "multasRecuperadas", name: "Multas Recuperadas", label: "Valor Multas Recuperadas", color: "#ef4444" },
+] as const;
+
 export function calcularReceita(dados: DadosMensais): number {
-  return dados.vendaVariavel + dados.vendaFixa + dados.rifas + dados.destaques + dados.multasRecuperadas;
+  return linhasReceita.reduce((total, { key }) => total + dados[key], 0);
 }
+
+const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+export const formatarCentavos = (value: number) => moeda.format(value / 100);

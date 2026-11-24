@@ -14,8 +14,8 @@ const meses = [
 
 const comissoesPorCategoria = [
   { categoria: "Afiliados de Produtos", valor: 18500.00, icone: Package, cor: "text-blue-600" },
-  { categoria: "Afiliados de Outlet", valor: 12350.00, icone: ShoppingBag, cor: "text-purple-600" },
-  { categoria: "Afiliados Digital", valor: 15040.00, icone: Monitor, cor: "text-green-600" },
+  { categoria: "Afiliados de Kits", valor: 12350.00, icone: ShoppingBag, cor: "text-purple-600" },
+  { categoria: "Afiliados do Digital", valor: 15040.00, icone: Monitor, cor: "text-green-600" },
 ];
 
 const historicoComissoes = [

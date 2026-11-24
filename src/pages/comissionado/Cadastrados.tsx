@@ -4,8 +4,8 @@ import { Users, Package, ShoppingBag, Monitor } from "lucide-react";
 
 const categorias = [
   { nome: "Afiliados de Produtos", quantidade: 1248, icone: Package, cor: "text-blue-600", bgCor: "bg-blue-100" },
-  { nome: "Afiliados de Outlet", quantidade: 856, icone: ShoppingBag, cor: "text-purple-600", bgCor: "bg-purple-100" },
-  { nome: "Afiliados Digital", quantidade: 2134, icone: Monitor, cor: "text-green-600", bgCor: "bg-green-100" },
+  { nome: "Afiliados de Kits", quantidade: 856, icone: ShoppingBag, cor: "text-purple-600", bgCor: "bg-purple-100" },
+  { nome: "Afiliados do Digital", quantidade: 2134, icone: Monitor, cor: "text-green-600", bgCor: "bg-green-100" },
 ];
 
 const Cadastrados = () => {

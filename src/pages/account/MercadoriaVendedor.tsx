@@ -1,3 +1,4 @@
+import { DashboardIcon } from "@/components/DashboardIcon";
 import { AccountLayout } from "@/components/AccountLayout";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -27,7 +28,7 @@ const MetricCard = ({ title, value, icon, color, onClick }: MetricCardProps) => 
       <div className="flex flex-col items-center text-center">
         <span className="text-4xl font-bold mb-3" style={{ color }}>{value}</span>
         <div className={`p-3 rounded-full mb-3`} style={{ backgroundColor: `${color}15` }}>
-          <img src={icon} alt={title} className="h-8 w-8 object-contain" />
+          <DashboardIcon src={icon} color={color} className="block h-8 w-8" />
         </div>
         <span className="text-sm font-medium text-muted-foreground">{title}</span>
       </div>
@@ -43,7 +44,7 @@ const MercadoriaVendedor = () => {
     { title: "Publicações para Melhorar", value: 3, icon: publicacaoMelhorarIcon, color: "#8B5CF6" },
     { title: "Produtos Vendidos", value: 156, icon: produtosVendidosIcon, color: "#06B6D4" },
     { title: "Prazo de Publicação", value: 2, icon: prazoPublicacaoIcon, color: "#EC4899" },
-    { title: "Cancelamento Fornecimento", value: 1, icon: cancelarFornecimentoIcon, color: "#EF4444" },
+    { title: "Cancelamento de Fornecimento", value: 1, icon: cancelarFornecimentoIcon, color: "#EF4444" },
     { title: "Produtos Devolvidos", value: 4, icon: produtosDevolvidosIcon, color: "#6366F1" },
   ];
 

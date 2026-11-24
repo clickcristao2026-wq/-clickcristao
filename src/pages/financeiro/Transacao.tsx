@@ -7,55 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-
-const meses = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-];
-
-const categoriasVariaveis = [
-  { nome: "Bazar", vendas: 145, fechamento: "30/01/2025", valorVendas: "R$ 12.500,00", taxaPlataforma: "R$ 1.250,00" },
-  { nome: "Outlet", vendas: 89, fechamento: "30/01/2025", valorVendas: "R$ 8.900,00", taxaPlataforma: "R$ 890,00" },
-  { nome: "Digital", vendas: 234, fechamento: "30/01/2025", valorVendas: "R$ 15.600,00", taxaPlataforma: "R$ 1.560,00" },
-  { nome: "Produtos", vendas: 312, fechamento: "30/01/2025", valorVendas: "R$ 45.800,00", taxaPlataforma: "R$ 4.580,00" },
-  { nome: "Feira", vendas: 67, fechamento: "30/01/2025", valorVendas: "R$ 5.200,00", taxaPlataforma: "R$ 520,00" },
-];
-
-const categoriasFixas = [
-  { nome: "Imobiliário", faturamento: 12, fechamento: "30/01/2025", valorPlataforma: "R$ 3.600,00" },
-  { nome: "Maquinário", faturamento: 8, fechamento: "30/01/2025", valorPlataforma: "R$ 2.400,00" },
-  { nome: "Motocicleta", faturamento: 45, fechamento: "30/01/2025", valorPlataforma: "R$ 4.500,00" },
-  { nome: "Transporte", faturamento: 23, fechamento: "30/01/2025", valorPlataforma: "R$ 2.300,00" },
-  { nome: "Aeronave", faturamento: 3, fechamento: "30/01/2025", valorPlataforma: "R$ 1.500,00" },
-  { nome: "Náutico", faturamento: 7, fechamento: "30/01/2025", valorPlataforma: "R$ 2.100,00" },
-  { nome: "Serviço", faturamento: 156, fechamento: "30/01/2025", valorPlataforma: "R$ 7.800,00" },
-];
-
-const historicosPorCategoria: Record<string, Array<{ id: string; produto: string; data: string; valor: string; taxa: string; status: string }>> = {
-  Feira: [
-    { id: "TRX040", produto: "Artesanato Regional", data: "15/01/2025", valor: "R$ 65,00", taxa: "R$ 6,50", status: "Concluído" },
-    { id: "TRX041", produto: "Produto de Feira Livre", data: "14/01/2025", valor: "R$ 42,00", taxa: "R$ 4,20", status: "Concluído" },
-  ],
-  Bazar: [
-    { id: "TRX001", produto: "Camiseta Gospel", data: "15/01/2025", valor: "R$ 79,90", taxa: "R$ 7,99", status: "Concluído" },
-    { id: "TRX002", produto: "Caneca Cristã", data: "14/01/2025", valor: "R$ 35,00", taxa: "R$ 3,50", status: "Concluído" },
-    { id: "TRX003", produto: "Adesivo Religioso", data: "13/01/2025", valor: "R$ 12,00", taxa: "R$ 1,20", status: "Pendente" },
-  ],
-  Outlet: [
-    { id: "TRX010", produto: "Livro Devocional (Outlet)", data: "15/01/2025", valor: "R$ 25,00", taxa: "R$ 2,50", status: "Concluído" },
-    { id: "TRX011", produto: "CD Gospel Antigo", data: "14/01/2025", valor: "R$ 15,00", taxa: "R$ 1,50", status: "Concluído" },
-  ],
-  Digital: [
-    { id: "TRX020", produto: "E-book Bíblia Comentada", data: "15/01/2025", valor: "R$ 49,90", taxa: "R$ 4,99", status: "Concluído" },
-    { id: "TRX021", produto: "Curso Online Teologia", data: "14/01/2025", valor: "R$ 199,00", taxa: "R$ 19,90", status: "Concluído" },
-    { id: "TRX022", produto: "Música Digital Gospel", data: "13/01/2025", valor: "R$ 9,90", taxa: "R$ 0,99", status: "Pendente" },
-  ],
-  Produtos: [
-    { id: "TRX030", produto: "Bíblia Sagrada NVI", data: "15/01/2025", valor: "R$ 89,90", taxa: "R$ 8,99", status: "Concluído" },
-    { id: "TRX031", produto: "Kit Artigos Religiosos", data: "14/01/2025", valor: "R$ 150,00", taxa: "R$ 15,00", status: "Concluído" },
-    { id: "TRX032", produto: "Quadro Decorativo", data: "13/01/2025", valor: "R$ 120,00", taxa: "R$ 12,00", status: "Pendente" },
-  ],
-};
+import { categoriasVariaveis, categoriasFixas, historicosPorCategoria, transacaoParceiro } from "@/data/dashboardTransactions";
+import { formatarCentavos, mesesDoAno as meses } from "@/data/gerenciamentoDadosMensais";
 
 const HistoricoBloco = ({ categoria }: { categoria: string }) => {
   const historico = historicosPorCategoria[categoria] || [];
@@ -94,16 +47,21 @@ const Transacao = () => {
   const [expandedVar, setExpandedVar] = useState<string | null>(null);
   const [expandedFixa, setExpandedFixa] = useState<string | null>(null);
 
+  const hasData = mesSelecionado === "Janeiro";
+  const fixedCards = [transacaoParceiro, ...categoriasFixas];
+  const activeVariable = categoriasVariaveis.find((category) => category.id === expandedVar);
+  const activeFixed = fixedCards.find((category) => category.id === expandedFixa);
+
   return (
     <FinanceiroLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Transações</h1>
-            <p className="text-muted-foreground">Contabilização sincronizada com gateway de pagamentos</p>
+            <p className="text-muted-foreground">Dados demonstrativos de transações de janeiro de 2025</p>
           </div>
           <Select value={mesSelecionado} onValueChange={setMesSelecionado}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger aria-label="Selecionar mês" className="w-48">
               <SelectValue placeholder="Selecione o mês" />
             </SelectTrigger>
             <SelectContent>
@@ -114,8 +72,9 @@ const Transacao = () => {
           </Select>
         </div>
 
+        {!hasData && <p role="status" className="text-sm text-muted-foreground">Sem transações detalhadas para este mês.</p>}
         <Tabs defaultValue="variaveis" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex h-auto flex-wrap justify-start">
             <TabsTrigger value="variaveis">Vendas Variáveis (Produtos)</TabsTrigger>
             <TabsTrigger value="fixas">Vendas Fixas (Anúncios)</TabsTrigger>
           </TabsList>
@@ -123,42 +82,53 @@ const Transacao = () => {
           <TabsContent value="variaveis" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {categoriasVariaveis.map((cat) => (
-                <Card key={cat.nome} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setExpandedVar(expandedVar === cat.nome ? null : cat.nome)}>
+                <Card key={cat.id} className="transition-shadow hover:shadow-md">
                   <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg">{cat.nome}</CardTitle>
-                    {expandedVar === cat.nome ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <CardTitle className="w-full text-lg">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-auto w-full justify-between gap-2 whitespace-normal p-0 text-left text-inherit hover:bg-transparent hover:text-primary"
+                        aria-expanded={hasData && expandedVar === cat.id}
+                        disabled={!hasData}
+                        onClick={() => setExpandedVar(expandedVar === cat.id ? null : cat.id)}
+                      >
+                        {cat.nome}
+                        {expandedVar === cat.id ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+                      </Button>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Qtd. Vendas:</span>
-                      <span className="font-medium">{cat.vendas}</span>
+                      <span className="font-medium">{hasData ? cat.vendas : "—"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Fechamento:</span>
-                      <span className="font-medium">{cat.fechamento}</span>
+                      <span className="font-medium">{hasData ? cat.fechamento : "—"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Valor Vendas:</span>
-                      <span className="font-medium text-primary">{cat.valorVendas}</span>
+                      <span className="font-medium text-primary">{hasData ? formatarCentavos(cat.valorVendas) : "—"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tx. Plataforma:</span>
-                      <span className="font-medium text-green-600">{cat.taxaPlataforma}</span>
+                      <span className="font-medium text-green-600">{hasData ? formatarCentavos(cat.taxaPlataforma) : "—"}</span>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-            {expandedVar && (
+            {hasData && activeVariable && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Eye className="h-5 w-5" />
-                    Histórico de Vendas - {expandedVar}
+                    Histórico de Vendas - {activeVariable.nome}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <HistoricoBloco categoria={expandedVar} />
+                  <HistoricoBloco categoria={activeVariable.id} />
                 </CardContent>
               </Card>
             )}
@@ -166,39 +136,60 @@ const Transacao = () => {
 
           <TabsContent value="fixas" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {categoriasFixas.map((cat) => (
-                <Card key={cat.nome} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setExpandedFixa(expandedFixa === cat.nome ? null : cat.nome)}>
+              {fixedCards.map((cat) => (
+                <Card key={cat.id} className="transition-shadow hover:shadow-md">
                   <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg">{cat.nome}</CardTitle>
-                    {expandedFixa === cat.nome ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <CardTitle className="w-full text-lg">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-auto w-full justify-between gap-2 whitespace-normal p-0 text-left text-inherit hover:bg-transparent hover:text-primary"
+                        aria-expanded={hasData && expandedFixa === cat.id}
+                        disabled={!hasData}
+                        onClick={() => setExpandedFixa(expandedFixa === cat.id ? null : cat.id)}
+                      >
+                        {cat.nome}
+                        {expandedFixa === cat.id ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+                      </Button>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Qtd. Faturamento:</span>
-                      <span className="font-medium">{cat.faturamento}</span>
+                      <span className="text-muted-foreground">{"vendas" in cat ? "Qtd. Vendas:" : "Qtd. Faturamento:"}</span>
+                      <span className="font-medium">{hasData ? ("vendas" in cat ? cat.vendas : cat.faturamento) : "—"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Fechamento:</span>
-                      <span className="font-medium">{cat.fechamento}</span>
+                      <span className="font-medium">{hasData ? cat.fechamento : "—"}</span>
                     </div>
+                    {"valorVendas" in cat && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Valor Vendas:</span>
+                        <span className="font-medium text-primary">{hasData ? formatarCentavos(cat.valorVendas) : "—"}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Valor Plataforma:</span>
-                      <span className="font-medium text-green-600">{cat.valorPlataforma}</span>
+                      <span className="text-muted-foreground">{"taxaPlataforma" in cat ? "Tx. Plataforma:" : "Valor Plataforma:"}</span>
+                      <span className="font-medium text-green-600">
+                        {hasData ? formatarCentavos("taxaPlataforma" in cat ? cat.taxaPlataforma : cat.valorPlataforma) : "—"}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-            {expandedFixa && (
+            {hasData && activeFixed && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Eye className="h-5 w-5" />
-                    Histórico de Vendas - {expandedFixa}
+                    Histórico de Vendas - {activeFixed.nome}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">Histórico de anúncios da categoria {expandedFixa} sincronizado com gateway.</p>
+                  {activeFixed.id === transacaoParceiro.id ? (
+                    <HistoricoBloco categoria={activeFixed.id} />
+                  ) : <p className="text-sm text-muted-foreground">Sem histórico detalhado para {activeFixed.nome}.</p>}
                 </CardContent>
               </Card>
             )}

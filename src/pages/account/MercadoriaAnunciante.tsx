@@ -1,3 +1,4 @@
+import { DashboardIcon } from "@/components/DashboardIcon";
 import { AccountLayout } from "@/components/AccountLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import visualizacaoIcon from "@/assets/icons/mercadoria-anunciante/visualizacao.png";
@@ -7,10 +8,11 @@ import engajamentoIcon from "@/assets/icons/mercadoria-anunciante/engajamento.pn
 const MercadoriaAnunciante = () => {
   const metricas = [
     { 
-      title: "Taxa de Visualizações", 
+      title: "Taxa de Visualização",
       value: "85%", 
       icon: visualizacaoIcon,
       color: "#2035F2",
+      iconColor: "#2135F2",
       description: "Percentual de alcance do seu anúncio"
     },
     { 
@@ -44,7 +46,7 @@ const MercadoriaAnunciante = () => {
                   className="mx-auto p-4 rounded-full w-fit mb-2"
                   style={{ backgroundColor: `${metrica.color}15` }}
                 >
-                  <img src={metrica.icon} alt={metrica.title} className="h-10 w-10 object-contain" />
+                  <DashboardIcon src={metrica.icon} color={metrica.iconColor ?? metrica.color} className="block h-10 w-10" />
                 </div>
                 <CardTitle className="text-lg">{metrica.title}</CardTitle>
               </CardHeader>

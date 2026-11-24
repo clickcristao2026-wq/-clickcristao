@@ -57,7 +57,7 @@ const dashboards = [
       { name: "Solicitados", path: "/logistica/solicitados" },
       { name: "Entregas", path: "/logistica/entregas" },
       { name: "Temporizador", path: "/logistica/temporizador" },
-      { name: "Click Transportes", path: "/logistica/transportes" },
+      { name: "Transportes", path: "/logistica/transportes" },
       { name: "Notificações", path: "/logistica/notificacoes" },
       { name: "Avisos", path: "/logistica/avisos" },
     ],
@@ -71,7 +71,7 @@ const dashboards = [
     pages: [
       { name: "Transação", path: "/financeiro/transacao" },
       { name: "Destaques", path: "/financeiro/destaques" },
-      { name: "Rifas", path: "/financeiro/rifas" },
+      { name: "inBox", path: "/financeiro/rifas" },
       { name: "Multas", path: "/financeiro/multas" },
       { name: "Reembolso", path: "/financeiro/reembolso" },
       { name: "Comissões", path: "/financeiro/comissoes" },

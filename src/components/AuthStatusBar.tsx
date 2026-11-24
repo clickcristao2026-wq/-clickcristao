@@ -12,7 +12,8 @@ export function AuthStatusBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!user || location.pathname.startsWith("/produto/")) return null;
+  const operationalPanel = /^\/(admin|rh|logistica|financeiro|comissionado|gerenciamento)(\/|$)/.test(location.pathname);
+  if (!user || operationalPanel || location.pathname.startsWith("/produto/")) return null;
 
   const handleLogout = () => {
     logout();

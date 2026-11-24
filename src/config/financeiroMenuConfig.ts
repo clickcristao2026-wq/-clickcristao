@@ -17,7 +17,7 @@ import {
 export const financeiroMenuItems = [
   { title: "Transação", icon: Receipt, path: "/financeiro/transacao" },
   { title: "Destaques", icon: Star, path: "/financeiro/destaques" },
-  { title: "Rifas", icon: Ticket, path: "/financeiro/rifas" },
+  { title: "inBox", icon: Ticket, path: "/financeiro/rifas" },
   { title: "Multas", icon: AlertTriangle, path: "/financeiro/multas" },
   { title: "Reembolso", icon: RefreshCcw, path: "/financeiro/reembolso" },
   { title: "Comissões", icon: Users, path: "/financeiro/comissoes" },

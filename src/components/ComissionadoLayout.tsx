@@ -1,20 +1,12 @@
-import { ReactNode } from "react";
-import ComissionadoSidebar from "./ComissionadoSidebar";
-import { SidebarInset } from "@/components/ui/sidebar";
+import type { ReactNode } from "react";
+import icon from "@/assets/icons/comissionado.png";
+import { comissionadoMenuItems } from "@/config/comissionadoMenuConfig";
+import { OperationalDashboard } from "./OperationalDashboard";
 
-interface ComissionadoLayoutProps {
-  children: ReactNode;
-}
-
-const ComissionadoLayout = ({ children }: ComissionadoLayoutProps) => {
+export default function ComissionadoLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <ComissionadoSidebar />
-      <SidebarInset className="flex-1">
-        <main className="p-6">{children}</main>
-      </SidebarInset>
-    </div>
+    <OperationalDashboard name="Comissionado" icon={icon} iconColor="#8B5CF6" sections={[{ items: comissionadoMenuItems.map(({ path, ...item }) => ({ ...item, url: path })) }]}>
+      {children}
+    </OperationalDashboard>
   );
-};
-
-export default ComissionadoLayout;
+}

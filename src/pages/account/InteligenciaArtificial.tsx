@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AnalysisResult } from "@/components/ai/AnalysisPanel";
+import { InternalSupportSearch } from "@/components/ai/InternalSupportSearch";
 import { useToast } from "@/hooks/use-toast";
 import {
   getAISettings,
@@ -32,6 +33,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const InteligenciaArtificial = () => {
   const { user } = useAuth();
+  const role = user?.role;
+  const internalRole = role === "consumidor" || role === "afiliado" ? role : null;
+  const supportLabel = role === "vendedor"
+    ? "Suporte ao Vendedor"
+    : role === "anunciante" ? "Suporte ao Anunciante" : agentLabels.suporte;
   const { toast } = useToast();
   const [settings, setSettings] = useState<AISettings | null>(null);
   const [apiKey, setApiKey] = useState("");
@@ -55,7 +61,7 @@ const InteligenciaArtificial = () => {
       .finally(() => {
         if (active) setLoading(false);
       });
-    fetchAIHistory()
+    fetchAIHistory({ portal: true })
       .then((data) => {
         if (active) setRuns(data);
       })
@@ -108,8 +114,9 @@ const InteligenciaArtificial = () => {
     }
   };
   return (
-    <AccountLayout title="Inteligência Artificial">
+    <AccountLayout title="Suporte IA">
       <div className="max-w-4xl space-y-6">
+        {internalRole && <InternalSupportSearch key={user?.id} role={internalRole} />}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -179,16 +186,16 @@ const InteligenciaArtificial = () => {
         <div className="grid sm:grid-cols-2 gap-4">
           {(
             [
-              [
+              ...(!internalRole ? [[
                 "Precificação",
                 "Pesquisa o mercado e avalia o lucro durante o cadastro do produto.",
-              ],
+              ]] : []),
               [
                 "Comparação",
                 "Compara características e preços dos produtos publicados.",
               ],
               [
-                "Suporte ao consumidor",
+                supportLabel,
                 "Orienta sobre a plataforma e os produtos disponíveis.",
               ],
               [
@@ -241,7 +248,7 @@ const InteligenciaArtificial = () => {
                     ["comparacao", "suporte", "investigador"] as AgentKind[]
                   ).map((k) => (
                     <SelectItem key={k} value={k}>
-                      {agentLabels[k]}
+                      {k === "suporte" ? supportLabel : agentLabels[k]}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
-import { dadosMensaisGerenciamento, mesesDoAno, calcularReceita } from "@/data/gerenciamentoDadosMensais";
+import { dadosMensaisGerenciamento, mesesDoAno, calcularReceita, formatarCentavos } from "@/data/gerenciamentoDadosMensais";
 
 const GerenciamentoFaturamento = () => {
   const [periodoDe, setPeriodoDe] = useState("janeiro");
@@ -34,10 +34,6 @@ const GerenciamentoFaturamento = () => {
 
   const totalGrafico = dadosGrafico.reduce((acc, d) => acc + d.value, 0);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   const formatPercent = (value: number) => {
     const prefix = value >= 0 ? "+" : "";
     return `${prefix}${value.toFixed(1)}%`;
@@ -49,7 +45,7 @@ const GerenciamentoFaturamento = () => {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">
-              <strong>⚡ Sincronização:</strong> Dados sincronizados com <span className="font-medium text-primary">Gerenciamento / Financeiro</span> de cada mês.
+              Dados demonstrativos de 2025, compartilhados com <span className="font-medium text-primary">Gerenciamento / Financeiro</span> de cada mês.
             </p>
           </CardContent>
         </Card>
@@ -101,15 +97,15 @@ const GerenciamentoFaturamento = () => {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-muted-foreground">Valor Receita:</span>
-                <span className="font-bold text-primary">{formatCurrency(receitaDe)}</span>
+                <span className="font-bold text-primary">{formatarCentavos(receitaDe)}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-muted-foreground">Valor Custo:</span>
-                <span className="font-bold text-destructive">{formatCurrency(custoDe)}</span>
+                <span className="font-bold text-destructive">{formatarCentavos(custoDe)}</span>
               </div>
               <div className="flex justify-between items-center py-2 bg-muted/50 rounded-lg px-3">
                 <span className="font-medium">Lucro Líquido:</span>
-                <span className="font-bold text-green-600">{formatCurrency(lucroLiquidoDe)}</span>
+                <span className="font-bold text-green-600">{formatarCentavos(lucroLiquidoDe)}</span>
               </div>
             </CardContent>
           </Card>
@@ -121,15 +117,15 @@ const GerenciamentoFaturamento = () => {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-muted-foreground">Valor Receita:</span>
-                <span className="font-bold text-primary">{formatCurrency(receitaAte)}</span>
+                <span className="font-bold text-primary">{formatarCentavos(receitaAte)}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-muted-foreground">Valor Custo:</span>
-                <span className="font-bold text-destructive">{formatCurrency(custoAte)}</span>
+                <span className="font-bold text-destructive">{formatarCentavos(custoAte)}</span>
               </div>
               <div className="flex justify-between items-center py-2 bg-muted/50 rounded-lg px-3">
                 <span className="font-medium">Lucro Líquido:</span>
-                <span className="font-bold text-green-600">{formatCurrency(lucroLiquidoAte)}</span>
+                <span className="font-bold text-green-600">{formatarCentavos(lucroLiquidoAte)}</span>
               </div>
             </CardContent>
           </Card>
@@ -202,7 +198,7 @@ const GerenciamentoFaturamento = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={140}
+                    outerRadius="75%"
                     fill="#8884d8"
                     dataKey="value"
                     label={({ name, value }) => {
@@ -215,7 +211,7 @@ const GerenciamentoFaturamento = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [formatCurrency(value), 'Valor']} />
+                  <Tooltip formatter={(value: number) => [formatarCentavos(value), 'Valor']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
